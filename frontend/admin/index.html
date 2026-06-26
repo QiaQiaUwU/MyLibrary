@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>管理 — MyLibrary</title>
+<style>
+/* 与书房主页同步的莫兰迪主题（data-tt 切换，映射到管理页变量名）*/
+:root{--bg:#e8e3da;--text:#4a4640;--text2:#8c8579;--accent:#9d8b7a;--border:#d8d1c5;--panel:#f0ece4;--ok:#8a9580;--warn:#b3a072;--card:#f6f2ea}
+body[data-tt="dawn"]{--bg:#e4e3e0;--text:#474a52;--text2:#878a92;--accent:#8b8fa3;--border:#d4d4d6;--panel:#eeedec;--ok:#8a96a0;--warn:#a8a18a;--card:#f4f3f1}
+body[data-tt="day"]{--bg:#e8e3da;--text:#4a4640;--text2:#8c8579;--accent:#9d8b7a;--border:#d8d1c5;--panel:#f0ece4;--ok:#8a9580;--warn:#b3a072;--card:#f6f2ea}
+body[data-tt="dusk"]{--bg:#e9e0d9;--text:#544944;--text2:#9a877f;--accent:#a98979;--border:#ddd0c8;--panel:#f1e9e2;--ok:#94897a;--warn:#b89766;--card:#f7f0e9}
+body[data-tt="night"]{--bg:#373d44;--text:#cdd1d6;--text2:#969ba3;--accent:#94a3b3;--border:#4b515a;--panel:#414750;--ok:#92a5a3;--warn:#b0a888;--card:#3d434b}
+*{box-sizing:border-box;margin:0;padding:0}
+#theme-bg{position:fixed;inset:0;z-index:-2;background:var(--bg);background-size:cover;background-position:center}
+#theme-bg.tiled{background-size:340px;background-repeat:repeat}
+#theme-veil{position:fixed;inset:0;z-index:-1;background:var(--bg);opacity:0;transition:opacity .4s;pointer-events:none}
+body.has-bg #theme-veil{opacity:0.85}
+body{font-family:"Noto Serif SC",-apple-system,sans-serif;background:var(--bg);color:var(--text);padding:20px 20px 80px;max-width:1100px;margin:0 auto;line-height:1.6;transition:background .4s,color .4s}
+.adminwrap{position:relative;z-index:1}
+h1{font-size:24px;margin-bottom:6px}
+h1 a{color:var(--accent);text-decoration:none;font-size:15px}
+.subtitle{color:var(--text2);font-size:14px;margin-bottom:24px}
+.sec-h{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin:30px 0 6px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+/* 统计卡片 */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat-card .num{font-size:28px;font-weight:700;color:var(--accent)}
+.stat-card .label{font-size:13px;color:var(--text2);margin-top:4px}
+/* 任务卡片 */
+.task-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:18px}
+.task-card h2{font-size:17px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.pipeline-guide{background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--accent,#7d5a4f);border-radius:12px;padding:18px 20px;margin:6px 0 22px}
+.pg-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.pg-desc{font-size:12.5px;color:var(--text2);margin-bottom:12px}
+.pg-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr;gap:6px}
+@media(min-width:680px){.pg-steps{grid-template-columns:1fr 1fr}}
+.pg-steps li{cursor:pointer;padding:9px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg,#fff);display:flex;flex-direction:column;gap:2px;transition:border-color .12s,transform .12s}
+.pg-steps li:hover{border-color:var(--accent,#7d5a4f);transform:translateY(-1px)}
+.pg-steps li b{font-size:13.5px;color:var(--accent,#7d5a4f)}
+.pg-steps li span{font-size:12px;color:var(--text2)}
+.card-flash{animation:cardflash 1.1s ease}
+@keyframes cardflash{0%,100%{box-shadow:none}30%{box-shadow:0 0 0 3px var(--accent,#7d5a4f)}}
+.task-card .desc{font-size:13px;color:var(--text2);margin-bottom:14px}
+.btn{padding:9px 18px;border:none;border-radius:7px;cursor:pointer;font-size:14px;font-family:inherit;margin-right:8px}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.btn.danger{background:#a83232;color:#fff}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn:hover:not(:disabled){opacity:0.9}
+/* 进度条 */
+.progress-wrap{margin-top:14px;display:none}
+.progress-wrap.show{display:block}
+.progress-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);width:0;transition:width 0.3s}
+.progress-msg{font-size:13px;color:var(--text2);margin-top:6px}
+/* 结果区 */
+.result{margin-top:14px;padding:14px;background:var(--card);border-radius:8px;font-size:13px;display:none}
+.result.show{display:block}
+.result table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
+.result th,.result td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)}
+/* 去重对比展示 */
+.dedup-summary{font-size:15px;margin-bottom:6px}
+.dedup-layers{font-size:12px;color:var(--text2);margin-bottom:12px}
+.anomaly-warn{background:rgba(168,50,50,0.08);border-left:3px solid var(--accent);padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:14px;line-height:1.6}
+.dedup-groups{display:flex;flex-direction:column;gap:10px}
+.dgroup{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.dgroup.anomaly{border-color:var(--accent);background:rgba(168,50,50,0.04)}
+.dgroup-tag{font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+.dgroup.anomaly .dgroup-tag{color:var(--accent);font-weight:600}
+.dbook{padding:4px 0;font-size:13px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.dbadge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;flex-shrink:0}
+.keep-badge{background:rgba(90,125,79,0.15);color:var(--ok)}
+.remove-badge{background:rgba(168,50,50,0.12);color:var(--accent)}
+.dtitle{font-weight:500}
+.dauthor{color:var(--text2);font-size:12px}
+.dmeta{color:var(--text2);font-size:12px;margin-left:auto}
+.dchap{color:var(--ok);font-weight:600}
+.dextra{color:var(--warn);font-weight:600}
+.keep-row .dtitle{color:var(--ok)}
+.dedup-more{font-size:12px;color:var(--text2);margin-top:10px;text-align:center}
+.result .keep{color:var(--ok)}
+.result .remove{color:var(--accent)}
+/* 日志 */
+.logs{margin-top:10px;max-height:160px;overflow-y:auto;background:#2a2118;color:#d4c9b0;font-family:monospace;font-size:11px;padding:10px;border-radius:6px;display:none}
+.logs.show{display:block}
+/* 范围选择 */
+.scope-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.scope-row select,.scope-row input{padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit}
+.cost-box{font-size:13px;color:var(--warn);margin:8px 0;padding:8px 12px;background:rgba(184,134,11,0.1);border-radius:6px;display:none}
+.cost-box.show{display:block}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:var(--border)}
+</style></head><body>
+<div id="theme-bg"></div><div id="theme-veil"></div>
+<div class="adminwrap">
+<h1><a href="/">← 书房</a> / 管理</h1>
+<div class="subtitle">数据维护操作。所有操作会自动备份数据库，去重和合并不会删除物理文件（移到隔离区）。</div>
+
+<div class="stats" id="stats">
+  <div class="stat-card"><div class="num" id="s-total">—</div><div class="label">总书目</div></div>
+  <div class="stat-card"><div class="num" id="s-authors">—</div><div class="label">作者</div></div>
+  <div class="stat-card"><div class="num" id="s-tagged">—</div><div class="label">已打标签</div></div>
+  <div class="stat-card"><div class="num" id="s-untagged">—</div><div class="label">未打标签</div></div>
+  <div class="stat-card"><div class="num" id="s-take">—</div><div class="label">带走清单</div></div>
+</div>
+
+<div class="pipeline-guide">
+  <div class="pg-title">整理流水线 · 推荐顺序（由浅入深，一步步来）</div>
+  <div class="pg-desc">第一次整理大库建议按这个顺序走；每步都「先预览、后执行」，作者类操作执行前会自动备份数据库。点步骤跳到对应卡片。</div>
+  <ol class="pg-steps">
+    <li onclick="goStep('import-card')"><b>1 入库</b><span>把散落的书都收进库（批量入库 / 自动收拢）</span></li>
+    <li onclick="goStep('card-finish')"><b>2 完结 + 分章节</b><span>全库扫一遍，存完结状态和章节数（后面去重择优、对比都靠它）</span></li>
+    <li onclick="goStep('card-recover')"><b>3 找回作者·按书名</b><span>佚名书从书名里把作者提出来</span></li>
+    <li onclick="goStep('card-author-content')"><b>4 找回/合并作者·按正文</b><span>扫正文里的微博@/lofter/by，把同一作者不同笔名归一</span></li>
+    <li onclick="goStep('card-normalize')"><b>5 整理作者名</b><span>把"淮上-补车番"这类杂名清成核心作者名</span></li>
+    <li onclick="goStep('card-dedup')"><b>6 去重</b><span>作者/章节都齐了，再精确去重、留最全的版本</span></li>
+    <li onclick="goStep('card-classify')"><b>7 打标签</b><span>去重后再用 AI 打标签，省 token（同一本不重复花钱）</span></li>
+  </ol>
+</div>
+
+<h2 class="sec-h">入库 · 收集散落</h2>
+<div class="card" id="import-card">
+  <h2>批量入库（扫描文件夹）</h2>
+  <div class="desc">填一个文件夹的完整路径，把里面的小说（txt/epub，含子文件夹、压缩包）一次性扫描入库——自动解压、去重。也可以直接把文件拖到「书房」页面导入少量书。</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+    <input id="import-folder" placeholder="例如 F:\\新书 或 D:\\下载\\小说" style="flex:1;min-width:240px;padding:9px 12px;border:1px solid var(--line-solid,#ddd);border-radius:8px;font-size:14px">
+    <button class="btn primary" onclick="startImportFolder()">开始入库</button>
+  </div>
+  <div class="progress" id="importf-progress"><div class="progress-bar"><div class="progress-fill" id="importf-fill"></div></div><div class="progress-msg" id="importf-msg"></div></div>
+  <div class="desc" style="margin-top:6px">想"放进某文件夹就自动入库"（监听微信/下载/投递口）：在命令行跑 <code>python mylib/tools/watch_inbox.py 你的库路径 --all</code>（需 <code>pip install watchdog</code>）。</div>
+</div>
+
+<div class="card" id="autocol-card">
+  <h2>自动收拢散落的小说 <span class="badge">本地</span></h2>
+  <div class="desc">自动扫描常见位置——微信 / QQ 的文件接收目录、下载、桌面——把里面的小说（txt/epub/压缩包）找出来入库（自动去重）。建议先「预览」看看能收多少，确认后再「执行入库」。</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+    <button class="btn" onclick="previewAutoCollect()">预览（不动文件）</button>
+    <button class="btn primary" onclick="runAutoCollect()">执行入库（移动原文件）</button>
+  </div>
+  <div class="progress" id="autocol-progress"><div class="progress-bar"><div class="progress-fill" id="autocol-fill"></div></div><div class="progress-msg" id="autocol-msg"></div></div>
+  <div class="desc" style="margin-top:6px">⚠️「执行入库」会把找到的小说<b>移动</b>进书库（从微信/下载等原处移走，不是复制；原文件不会被销毁，只是搬进了书库）。先点「预览」不会动任何文件。</div>
+</div>
+
+<div class="card" id="proc-card">
+  <h2>处理进度</h2>
+  <div class="desc">各维护任务在整库上已经处理到哪了（已完成 / 共多少本 + 上次跑的时间）。</div>
+  <div id="proc-rows"><div class="progress-msg">加载中…</div></div>
+  <button class="btn secondary" onclick="loadProcessing()" style="margin-top:10px">刷新进度</button>
+</div>
+
+<div class="card" id="dups-card">
+  <h2>版本管理（重复副本）</h2>
+  <div class="desc">去重时被判为副本、移到隔离区的文件，按保留的主版本分组。可把某个副本「找回」（拷回 books/_restored 并重新入库）。</div>
+  <button class="btn secondary" onclick="loadDups()">查看重复</button>
+  <div id="dups-box"></div>
+</div>
+
+<div class="card" id="meta-card">
+  <h2>备份信息表（导出 / 导入）</h2>
+  <div class="desc">把每本书的「书名 / 作者 / 题材标签 / 评分 / 状态 / 笔记」导出成 JSON 备份；重装或换库后导入回填（按 书名+作者 或 原文件名 匹配）。也支持导入 Moon+ Reader 的 .mrpro。</div>
+  <button class="btn primary" onclick="exportMeta()">导出 JSON</button>
+  <label class="btn secondary" style="cursor:pointer">导入 JSON / .mrpro<input type="file" accept=".json,.mrpro" style="display:none" onchange="importMeta(this)"></label>
+  <div id="meta-msg" class="progress-msg"></div>
+</div>
+
+<h2 class="sec-h">查重 · 去重 · 版本</h2>
+<!-- 去重 -->
+<div class="task-card" id="card-dedup">
+  <h2>去重 <span class="badge">本地·免费</span></h2>
+  <div class="desc">三层去重：内容哈希相同 / 同作者书名相似 / 空壳残章。先扫描看报告，确认后执行。重复文件移到隔离区，不删除。<br><b>想更准</b>：先跑「完结识别 + 分章节」——它会统计每本的章节数，查重挑"保留最全版本"时优先用章节数（更准、且不限组数）。<br><b>放心</b>：去重删旧版本前，会把你在那本上写的<b>简评、评分、收藏、已读、最近阅读、标签、划线/书签/笔记/进度</b>自动搬到保留的那本，不会丢。</div>
+  <button class="btn primary" id="btn-dedup-scan" onclick="startDedupScan()">扫描重复</button>
+  <button class="btn danger" id="btn-dedup-apply" onclick="startDedupApply()" disabled>执行去重</button>
+  <div class="progress-wrap" id="dedup-progress">
+    <div class="progress-bar"><div class="progress-fill" id="dedup-fill"></div></div>
+    <div class="progress-msg" id="dedup-msg"></div>
+  </div>
+  <div class="result" id="dedup-result"></div>
+  <div class="logs" id="dedup-logs"></div>
+</div>
+
+<h2 class="sec-h">分类标签 · 作者整理</h2>
+<!-- AI 打标签 -->
+<div class="task-card" id="card-classify">
+  <h2>AI 内容打标签 <span class="badge" style="background:#d4a;color:#fff">需 API·按量计费</span></h2>
+  <div class="desc">AI 读取每本书开头内容，判断真实体裁（耽美/古代/修真/快穿等）。建议先去重再打标，避免给重复书重复分析。</div>
+  <div class="scope-row">
+    <label>范围:</label>
+    <select id="classify-scope" onchange="onScopeChange()">
+      <option value="untagged">未打标签的书</option>
+      <option value="take">带走清单</option>
+      <option value="author">指定作者</option>
+      <option value="all">全部（重打）</option>
+    </select>
+    <select id="classify-author" style="display:none"></select>
+    <button class="btn secondary" onclick="estimateCost()">预估成本</button>
+  </div>
+  <div class="cost-box" id="cost-box"></div>
+  <button class="btn primary" id="btn-classify" onclick="startClassify()">开始打标签</button>
+  <button class="btn secondary" id="btn-classify-cancel" onclick="cancelTask('classify')" disabled>取消</button>
+  <div class="progress-wrap" id="classify-progress">
+    <div class="progress-bar"><div class="progress-fill" id="classify-fill"></div></div>
+    <div class="progress-msg" id="classify-msg"></div>
+  </div>
+  <div class="logs" id="classify-logs"></div>
+</div>
+
+<!-- 作者合并 -->
+<div class="task-card" id="card-merge">
+  <h2>作者别名合并 <span class="badge">本地·免费</span></h2>
+  <div class="desc">自动检测同一作者的不同名字（如 江洋大刀/狄醉山、xxx_1 后缀变体）并归一。先预览规则数，确认后执行。</div>
+  <button class="btn secondary" onclick="startMerge(false)">预览别名规则</button>
+  <button class="btn danger" onclick="startMerge(true)">执行合并</button>
+  <div class="progress-wrap" id="merge-progress">
+    <div class="progress-bar"><div class="progress-fill" id="merge-fill"></div></div>
+    <div class="progress-msg" id="merge-msg"></div>
+  </div>
+  <div class="result" id="merge-result"></div>
+</div>
+
+<!-- 找回作者 -->
+<div class="task-card" id="card-recover">
+  <h2>从书名找回作者 <span class="badge">本地·免费</span></h2>
+  <div class="desc">很多书入库时丢了作者，被标成"佚名"，但书名里常带着作者名（如"书名_诗无茶""书名 作者诗无茶""书名by诗无茶"）。这个任务扫描佚名书的书名，把作者找回来归并。先预览，确认后执行。</div>
+  <button class="btn secondary" onclick="startRecover(false)">预览可找回的</button>
+  <button class="btn danger" onclick="startRecover(true)">执行找回</button>
+  <div class="progress-wrap" id="recover-progress">
+    <div class="progress-bar"><div class="progress-fill" id="recover-fill"></div></div>
+    <div class="progress-msg" id="recover-msg"></div>
+  </div>
+  <div class="result" id="recover-result"></div>
+</div>
+
+<!-- 整理作者名 -->
+<div class="task-card" id="card-normalize">
+  <h2>整理作者名 / 解析书名 <span class="badge">本地·免费</span></h2>
+  <div class="desc">入库时常把书名里的描述当成作者，导致同一作者被拆成一堆"杂名"：如「淮上-补车番 / 淮上肉章 / 淮上近代架空」其实都是 <b>淮上</b>；「priest完结番外三篇 / priest完结+番外」都是 <b>priest</b>；「火风L3p / 火风L换攻」都是 <b>火风</b>。这个任务把这些清成核心作者名并合并到一起，作者分类、查重、找回都会更准。先预览，确认后执行（自动备份数据库）。</div>
+  <button class="btn secondary" onclick="startNormalize(false)">预览可整理的</button>
+  <button class="btn danger" onclick="startNormalize(true)">执行整理</button>
+  <div class="progress-wrap" id="normauth-progress">
+    <div class="progress-bar"><div class="progress-fill" id="normauth-fill"></div></div>
+    <div class="progress-msg" id="normauth-msg"></div>
+  </div>
+  <div class="result" id="normauth-result"></div>
+</div>
+<!-- 按正文找回 / 合并作者 -->
+<div class="task-card" id="card-author-content">
+  <h2>按正文找回 / 合并作者（笔名归一）<span class="badge">本地·免费</span></h2>
+  <div class="desc">同一作者用了不同笔名入库时，光看作者名看不出是同一人，但正文开头常带身份标记（微博@、lofter、by XX、作者：XX、首发平台）。这个任务扫每本书正文开头，把"标记相同但作者名不一致"的书归一到同一作者——比如「抗病毒口服液」和「送泥一条鱼」靠正文里的微博@认出是同一人并合并。先预览，确认后执行（自动备份数据库）。<br><b>注意</b>：要逐本读正文开头，13 万本会跑几分钟。</div>
+  <button class="btn secondary" onclick="startAuthorByContent(false)">预览可合并的</button>
+  <button class="btn danger" onclick="startAuthorByContent(true)">执行合并</button>
+  <div class="progress-wrap" id="abc-progress">
+    <div class="progress-bar"><div class="progress-fill" id="abc-fill"></div></div>
+    <div class="progress-msg" id="abc-msg"></div>
+  </div>
+  <div class="result" id="abc-result"></div>
+</div>
+<!-- 从备份找回丢失的简评 -->
+<div class="task-card" id="card-recover-reviews">
+  <h2>找回丢失的简评（从备份）<span class="badge">本地·免费</span></h2>
+  <div class="desc">如果你写过的简评/总评后来不见了，这里会两头找：①扫数据库的历次备份（library.db.bak*）；②查<b>同名书的其它副本</b>——很多时候总评其实写在了这本书的另一个重复副本上（还没去重），这就能把它补给你点开看到的那本空的。先预览，不会覆盖你现在已有的简评。</div>
+  <button class="btn secondary" onclick="startRecoverReviews(false)">扫描可找回的</button>
+  <button class="btn primary" onclick="startRecoverReviews(true)">执行恢复</button>
+  <button class="btn secondary" onclick="listAllReviews()">列出全部总评（自己复制）</button>
+  <div class="progress-wrap" id="rrv-progress">
+    <div class="progress-bar"><div class="progress-fill" id="rrv-fill"></div></div>
+    <div class="progress-msg" id="rrv-msg"></div>
+  </div>
+  <div class="result" id="rrv-result"></div>
+</div>
+<!-- 同名书笔记互通 -->
+<div class="task-card" id="card-sync-title">
+  <h2>同名书笔记互通（更全的版本沿用旧笔记）<span class="badge">本地·免费</span></h2>
+  <div class="desc">你中途找到<b>更全的版本</b>（书名带「精校/全本/番外」等也能认出是同一本）时，这里把你在旧版本上写的<b>划线、笔记、书签、简评、评分、收藏、已读、进度</b>复制到同名书里<b>还空白</b>的那些版本上。<br><b>非破坏</b>：两个版本都保留，只往空的补、不动已有数据的；执行前自动备份。划线/进度按字符位置走——"更全版本"开头通常和旧版一致，所以基本能对上（位置对不上的那条不显示而已，不会乱）。先预览。</div>
+  <button class="btn secondary" onclick="startSyncSameTitle(false)">预览可互通的</button>
+  <button class="btn primary" onclick="startSyncSameTitle(true)">执行互通</button>
+  <div class="progress-wrap" id="sst-progress">
+    <div class="progress-bar"><div class="progress-fill" id="sst-fill"></div></div>
+    <div class="progress-msg" id="sst-msg"></div>
+  </div>
+  <div class="result" id="sst-result"></div>
+</div>
+<div class="task-card" id="card-audit">
+  <h2>带走补全核查 <span class="badge">本地·免费</span></h2>
+  <div class="desc">对比母库和平板 mrpro，列出哪些作者在母库有很多书但平板没带全。</div>
+  <button class="btn secondary" onclick="startAudit()">运行核查</button>
+  <div class="progress-wrap" id="audit-progress">
+    <div class="progress-bar"><div class="progress-fill" id="audit-fill"></div></div>
+    <div class="progress-msg" id="audit-msg"></div>
+  </div>
+  <div class="result" id="audit-result"></div>
+</div>
+
+<!-- 完结识别 -->
+<div class="task-card" id="card-finish">
+  <h2>完结识别 + 分章节 <span class="badge">本地·免费</span></h2>
+  <div class="desc">扫描每本书的章节和结尾，识别完结/连载状态。<b>支持中断续跑</b>：扫到一半关掉服务也没关系，下次再点"继续扫描"会自动跳过扫过的，从断点接着扫。13万本可以分几次扫完。</div>
+  <button class="btn secondary" onclick="startFinished(true)">继续扫描（推荐）</button>
+  <button class="btn" onclick="startFinished(false)" style="background:var(--panel);color:var(--text2)">重新全扫</button>
+  <button class="btn secondary" onclick="cancelTask('finished')">停止</button>
+  <div class="progress-wrap" id="finished-progress">
+    <div class="progress-bar"><div class="progress-fill" id="finished-fill"></div></div>
+    <div class="progress-msg" id="finished-msg"></div>
+  </div>
+  <div class="result" id="finished-result"></div>
+</div>
+
+<script>
+let dedupScanTaskId = null;
+let pollTimers = {};
+
+function paintStats(s){
+  document.getElementById('s-total').textContent = (s.total||0).toLocaleString();
+  document.getElementById('s-authors').textContent = (s.authors||0).toLocaleString();
+  document.getElementById('s-tagged').textContent = (s.tagged||0).toLocaleString();
+  document.getElementById('s-untagged').textContent = (s.untagged||0).toLocaleString();
+  document.getElementById('s-take').textContent = (s.take_to_tablet||0).toLocaleString();
+}
+async function loadStats(fresh) {
+  // 先用上次缓存秒显，避免每次进管理都白等一遍统计
+  if(!fresh){
+    try{const c=JSON.parse(sessionStorage.getItem('admin_stats')||'null');if(c)paintStats(c);}catch(e){}
+  }
+  const s = await (await fetch('/api/admin/stats'+(fresh?'?fresh=1':''))).json();
+  paintStats(s);
+  try{sessionStorage.setItem('admin_stats',JSON.stringify(s));}catch(e){}
+  loadProcessing();
+}
+async function startImportFolder(){
+  const folder=document.getElementById('import-folder').value.trim();
+  if(!folder){alert('先填要导入的文件夹路径');return;}
+  const r=await (await fetch('/api/admin/task/import_folder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({folder})})).json();
+  if(!r.task_id){alert('启动失败');return;}
+  pollTask(r.task_id,'importf',(t)=>{ if(t.status==='done'){loadStats(true);loadProcessing&&loadProcessing();} });
+}
+async function previewAutoCollect(){
+  const r=await (await fetch('/api/admin/task/auto_collect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dry_run:true})})).json();
+  if(!r.task_id){alert('启动失败');return;}
+  pollTask(r.task_id,'autocol',()=>{});
+}
+async function runAutoCollect(){
+  if(!confirm('将自动扫描 微信/QQ 接收、下载、桌面，把找到的小说【移动】进书库（从原处移走，不是复制）。\n建议先点过「预览」确认数量。\n\n确定执行吗？'))return;
+  const r=await (await fetch('/api/admin/task/auto_collect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dry_run:false,move:true})})).json();
+  if(!r.task_id){alert('启动失败');return;}
+  pollTask(r.task_id,'autocol',(t)=>{ if(t.status==='done'){loadStats&&loadStats(true);loadProcessing&&loadProcessing();} });
+}
+async function loadProcessing(){
+  try{
+    const r = await (await fetch('/api/admin/processing')).json();
+    const total = r.total||0;
+    const box = document.getElementById('proc-rows');
+    box.innerHTML = (r.items||[]).map(it=>{
+      const done = (it.done==null)?0:it.done;
+      const pct = total? Math.min(100, Math.round(done/total*100)) : 0;
+      const last = it.last && it.last.at ? ('上次 '+String(it.last.at).slice(0,16).replace('T',' ')) : '还没跑过';
+      const note = (it.last&&it.last.note)?(' · '+it.last.note):'';
+      return `<div style="margin:10px 0">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+          <b>${it.name}</b>
+          <span style="color:#8a7f70">${done.toLocaleString()} / ${total.toLocaleString()}（${pct}%）· ${last}${note}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('') || '<div class="progress-msg">暂无数据</div>';
+  }catch(e){
+    document.getElementById('proc-rows').innerHTML='<div class="progress-msg">读取失败（可能数据库还没迁移出 proc_ 列，跑一次维护任务即可）</div>';
+  }
+}
+
+// ── 通用任务轮询 ──
+function pollTask(taskId, prefix, onDone) {
+  window['_' + prefix + 'TaskId'] = taskId;   // 让「停止」按钮能找到当前任务
+  const fill = document.getElementById(prefix + '-fill');
+  const msg = document.getElementById(prefix + '-msg');
+  const logs = document.getElementById(prefix + '-logs');
+  document.getElementById(prefix + '-progress').classList.add('show');
+  if (logs) logs.classList.add('show');
+
+  clearInterval(pollTimers[prefix]);
+  pollTimers[prefix] = setInterval(async () => {
+    try {
+      const t = await (await fetch('/api/admin/task/' + taskId)).json();
+      if (fill) fill.style.width = t.progress + '%';
+      if (msg) msg.textContent = t.message;
+      if (logs && t.logs) logs.innerHTML = t.logs.map(l => '<div>' + escH(l) + '</div>').join('');
+      if (logs) logs.scrollTop = 99999;
+
+      if (t.status === 'done' || t.status === 'error' || t.status === 'cancelled') {
+        clearInterval(pollTimers[prefix]);
+        if (onDone) onDone(t);
+      }
+    } catch(e) {}
+  }, 800);
+}
+
+// ── 去重 ──
+async function startDedupScan() {
+  document.getElementById('btn-dedup-scan').disabled = true;
+  document.getElementById('dedup-result').classList.remove('show');
+  const r = await (await fetch('/api/admin/task/dedup_scan', {method:'POST'})).json();
+  dedupScanTaskId = r.task_id;
+  pollTask(r.task_id, 'dedup', (t) => {
+    document.getElementById('btn-dedup-scan').disabled = false;
+    if (t.status === 'done') {
+      document.getElementById('btn-dedup-apply').disabled = false;
+      showDedupResult(t.detail);
+    }
+  });
+}
+
+let DEDUP_DATA=null, DEDUP_OVERRIDES={};
+function showDedupResult(d) {
+  DEDUP_DATA = d; DEDUP_OVERRIDES = {};
+  const el = document.getElementById('dedup-result');
+  el.classList.add('show');
+  renderDedupGroups();
+}
+function renderDedupGroups(){
+  const d = DEDUP_DATA; if(!d) return;
+  const el = document.getElementById('dedup-result');
+  let html = `<div class="dedup-summary">总 <b>${d.total_books.toLocaleString()}</b> 本 · 可清理 <b class="remove">${d.total_removable.toLocaleString()}</b> 本 · 清理后剩 <b class="keep">${d.after_dedup.toLocaleString()}</b> 本</div>`;
+  html += `<div class="dedup-layers">哈希相同 ${d.dup_hash} 组 &nbsp;·&nbsp; 书名相似 ${d.dup_title} 组 &nbsp;·&nbsp; 空壳残章 ${d.dup_stub} 组</div>`;
+  html += `<div class="dedup-layers" style="color:var(--accent)">章节数有时数不准，自动选的不一定对 —— <b>点某一行即可把它改成「保留」</b>。</div>`;
+  if (d.anomaly_count > 0) {
+    html += `<div class="anomaly-warn">检测到 <b>${d.anomaly_count}</b> 组疑似异常（内容相同但书名完全不同）。这些组执行时会自动跳过，需你手动检查。</div>`;
+  }
+  if (d.preview && d.preview.length) {
+    html += '<div class="dedup-groups">';
+    d.preview.slice(0, 40).forEach(g => {
+      const cls = g.anomaly ? 'dgroup anomaly' : 'dgroup';
+      const books = [g.keep].concat(g.remove||[]);
+      const keepId = (g.gid in DEDUP_OVERRIDES) ? DEDUP_OVERRIDES[g.gid] : g.keep.id;
+      const changed = (keepId !== g.keep.id);
+      html += `<div class="${cls}">`;
+      html += `<div class="dgroup-tag">${g.layer}${g.anomaly ? ' · 疑似异常' : ''}${changed ? ' · 已手动改' : ''}</div>`;
+      books.forEach(b => {
+        const isKeep = (b.id === keepId);
+        const badge = isKeep ? '<span class="dbadge keep-badge">保留</span>' : '<span class="dbadge remove-badge">清理</span>';
+        const rowcls = isKeep ? 'dbook keep-row' : 'dbook remove-row';
+        html += `<div class="${rowcls}" style="cursor:pointer" title="点这一行把它设为保留" onclick="chooseDedupKeep(${g.gid},${b.id})">${badge} ${chapterInfo(b)}</div>`;
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+    if (d.preview.length > 40) html += `<div class="dedup-more">… 共 ${d.preview.length} 组，显示前 40（手动指定也只在这 40 组内）。完整列表在执行后的隔离区记录里。</div>`;
+  }
+  el.innerHTML = html;
+}
+function chooseDedupKeep(gid, id){
+  DEDUP_OVERRIDES[gid] = id;
+  const y = window.scrollY;
+  renderDedupGroups();
+  window.scrollTo(0, y);
+}
+
+function chapterInfo(b) {
+  // 显示书名 + 字数 + 章节/番外数（用于直观对比哪个最全）
+  let s = `<span class="dtitle">${escH(b.title)}</span>`;
+  if (b.author) s += ` <span class="dauthor">${escH(b.author)}</span>`;
+  const meta = [];
+  if (b.chapters !== null && b.chapters !== undefined) {
+    const ch = (b.chapters > 2000) ? null : b.chapters;
+    if (ch !== null) meta.push(`<span class="dchap">${ch}章</span>`);
+    // 番外 > 60 基本是数错了，不显示具体数字，免得误导
+    if (b.extras > 0 && b.extras <= 60) meta.push(`<span class="dextra">${b.extras}番外</span>`);
+    else if (b.extras > 60) meta.push(`<span class="dextra" style="opacity:.5">番外数异常</span>`);
+  }
+  if (b.wc) meta.push(`${(b.wc/10000).toFixed(1)}万字`);
+  if (b.size) meta.push(`${(b.size/1024/1024).toFixed(1)}MB`);
+  if (meta.length) s += ` <span class="dmeta">${meta.join(' · ')}</span>`;
+  return s;
+}
+
+async function startDedupApply() {
+  const nOv = Object.keys(DEDUP_OVERRIDES).length;
+  if (!confirm('确认执行去重？重复文件会移到隔离区（不删除），数据库会自动备份。' + (nOv?`\n（含你手动指定保留的 ${nOv} 组）`:''))) return;
+  document.getElementById('btn-dedup-apply').disabled = true;
+  const r = await (await fetch('/api/admin/task/dedup_apply', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({scan_task_id: dedupScanTaskId, overrides: DEDUP_OVERRIDES})
+  })).json();
+  pollTask(r.task_id, 'dedup', (t) => {
+    if (t.status === 'done') {
+      alert('去重完成：' + t.message);
+      loadStats(true);
+    }
+  });
+}
+
+// ── AI 打标签 ──
+function onScopeChange() {
+  const scope = document.getElementById('classify-scope').value;
+  const authorSel = document.getElementById('classify-author');
+  if (scope === 'author') {
+    authorSel.style.display = 'inline-block';
+    loadAuthors();
+  } else {
+    authorSel.style.display = 'none';
+  }
+  document.getElementById('cost-box').classList.remove('show');
+}
+
+async function loadAuthors() {
+  const r = await (await fetch('/api/admin/authors?limit=100')).json();
+  const sel = document.getElementById('classify-author');
+  sel.innerHTML = r.authors.map(a => `<option value="${escH(a.name)}">${escH(a.name)} (${a.count}本)</option>`).join('');
+}
+
+async function estimateCost() {
+  const scope = document.getElementById('classify-scope').value;
+  const sv = scope === 'author' ? document.getElementById('classify-author').value : '';
+  const r = await (await fetch(`/api/admin/classify/estimate?scope=${scope}&scope_value=${encodeURIComponent(sv)}`)).json();
+  const box = document.getElementById('cost-box');
+  box.classList.add('show');
+  box.innerHTML = `范围内 <b>${r.count}</b> 本 · 预估耗时 <b>${r.est_minutes}</b> 分钟 · 预估费用 <b>¥${r.est_cost_rmb}</b>`;
+  if (r.count > 5000) box.innerHTML += '<br>数量较大，建议缩小范围或分批运行';
+}
+
+async function startClassify() {
+  const scope = document.getElementById('classify-scope').value;
+  const sv = scope === 'author' ? document.getElementById('classify-author').value : '';
+  if (!confirm(`确认开始 AI 打标签？范围: ${scope}${sv ? ' / ' + sv : ''}。这会消耗 API 额度。`)) return;
+  document.getElementById('btn-classify').disabled = true;
+  document.getElementById('btn-classify-cancel').disabled = false;
+  try {
+    const r = await (await fetch('/api/admin/task/classify', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({scope, scope_value: sv})
+    })).json();
+    if (r.detail || !r.task_id) { alert(r.detail || '启动失败'); document.getElementById('btn-classify').disabled = false; return; }
+    window._classifyTaskId = r.task_id;
+    pollTask(r.task_id, 'classify', (t) => {
+      document.getElementById('btn-classify').disabled = false;
+      document.getElementById('btn-classify-cancel').disabled = true;
+      if (t.status === 'done') { alert('打标签完成：' + t.message); loadStats(true); }
+    });
+  } catch(e) {
+    alert('启动失败: ' + e.message);
+    document.getElementById('btn-classify').disabled = false;
+  }
+}
+
+// ── 作者合并 ──
+async function startMerge(apply) {
+  if (apply && !confirm('确认执行作者合并？数据库会自动备份。')) return;
+  const r = await (await fetch('/api/admin/task/merge_authors', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({apply})
+  })).json();
+  pollTask(r.task_id, 'merge', (t) => {
+    const el = document.getElementById('merge-result');
+    el.classList.add('show');
+    if (t.detail.preview) {
+      el.innerHTML = `<b>${t.detail.alias_count}</b> 条别名规则：<br>` +
+        '<table><tr><th>别名</th><th>→ 统一为</th></tr>' +
+        t.detail.preview.slice(0,40).map(p => `<tr><td>${escH(p.alias)}</td><td class="keep">${escH(p.target)}</td></tr>`).join('') +
+        '</table>';
+    } else {
+      el.innerHTML = t.message;
+      loadStats(true);
+    }
+  });
+}
+
+// ── 找回作者 ──
+async function startRecover(apply) {
+  if (apply && !confirm('确认从书名找回作者并写回？数据库会自动备份。')) return;
+  const r = await (await fetch('/api/admin/task/recover_authors', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({apply})
+  })).json();
+  pollTask(r.task_id, 'recover', (t) => {
+    const el = document.getElementById('recover-result');
+    el.classList.add('show');
+    if (t.detail.preview && t.detail.preview.length) {
+      el.innerHTML = `可找回 <b>${t.detail.recovered_count}</b> 本，归入 <b>${t.detail.author_count}</b> 个作者：<br>` +
+        '<table><tr><th>作者</th><th>本数</th><th>示例</th></tr>' +
+        t.detail.preview.map(p => `<tr><td class="keep">${escH(p.author)}</td><td>${p.count}</td><td style="font-size:12px;color:var(--text2)">${escH((p.samples||[]).slice(0,2).join(' / '))}</td></tr>`).join('') +
+        '</table>';
+      if (t.status === 'done' && !t.message.includes('预览')) loadStats(true);
+    } else {
+      el.innerHTML = t.message || '没有找到可恢复的作者';
+    }
+  });
+}
+// ── 整理作者名 ──
+async function startNormalize(apply){
+  if(apply && !confirm('确认把杂乱的作者名规范并合并？数据库会自动备份。')) return;
+  const r=await (await fetch('/api/admin/task/normalize_authors',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apply})})).json();
+  if(!r.task_id){alert('启动失败');return;}
+  pollTask(r.task_id,'normauth',(t)=>{
+    const el=document.getElementById('normauth-result');el.classList.add('show');
+    const ex=(t.detail&&t.detail.examples)||[];
+    if(ex.length){
+      el.innerHTML=`可规范 <b>${t.detail.changed}</b> 本、合并 <b>${t.detail.authors_affected}</b> 个杂作者名：<br>`+
+        '<table><tr><th>原作者名</th><th>→ 规范为</th></tr>'+
+        ex.map(e=>`<tr><td style="color:var(--text2);font-size:12px">${escH(e.from)}</td><td class="keep">${escH(e.to)}</td></tr>`).join('')+'</table>';
+      if(t.status==='done' && !t.message.includes('预览')) loadStats(true);
+    }else{ el.innerHTML=t.message||'没有需要整理的作者名'; }
+  });
+}
+
+// ── 找回丢失的简评（从备份）──
+async function startRecoverReviews(apply){
+  if(apply && !confirm('从备份把丢失的简评写回库里？只会填现在为空的，不覆盖你已有的。')) return;
+  const r=await (await fetch('/api/admin/task/recover_reviews',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apply})})).json();
+  if(!r.task_id){alert('启动失败');return;}
+  pollTask(r.task_id,'rrv',(t)=>{
+    const el=document.getElementById('rrv-result');el.classList.add('show');
+    const rest=(t.detail&&t.detail.restored)||null;
+    if(apply){
+      el.innerHTML=(t.message||'')+(rest&&rest.length?('<br>'+rest.map(x=>'· '+escH(x)).join('<br>')):'');
+      return;
+    }
+    const ex=(t.detail&&t.detail.examples)||[];
+    if(ex.length){
+      el.innerHTML=`找到 <b>${t.detail.found}</b> 条可找回的简评：<br>`+
+        ex.map(e=>`<div style="padding:6px 0;border-bottom:1px solid var(--border)"><b>${escH(e.title)}</b>${e.author?'<span style="color:var(--text2)"> — '+escH(e.author)+'</span>':''}<br><span style="color:var(--text2);font-size:12px">${escH(e.review)}</span></div>`).join('');
+    }else{ el.innerHTML=t.message||'没找到可找回的简评'; }
+  });
+}
+async function startSyncSameTitle(apply){
+  if(apply && !confirm('把同名书里已有的笔记/划线/简评/进度，复制到同组空白的版本上？\n只往空的补、不动已有数据的，两个版本都保留，执行前自动备份。')) return;
+  const r=await (await fetch('/api/admin/task/sync_same_title',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apply})})).json();
+  if(!r.task_id){alert('启动失败');return;}
+  pollTask(r.task_id,'sst',(t)=>{
+    const el=document.getElementById('sst-result');el.classList.add('show');
+    const pv=(t.detail&&t.detail.preview)||[];
+    if(!apply && pv.length){
+      el.innerHTML=(t.message||'')+'<br>'+
+        '<table><tr><th>书名</th><th>可接上的空白版本数</th></tr>'+
+        pv.map(p=>`<tr><td class="keep">${escH(p.title)}</td><td>${p.to_count}</td></tr>`).join('')+'</table>';
+    }else{
+      el.innerHTML=t.message||'（无可互通的同名书）';
+      if(apply && t.status==='done') loadStats(true);
+    }
+  });
+}
+
+// ── 把管理卡片按整理流水线"由浅入深"从上到下重排 ──
+function reorderAdminCards(){
+  try{
+    const guide=document.querySelector('.pipeline-guide');
+    if(!guide)return;
+    document.querySelectorAll('h2.sec-h').forEach(h=>h.remove());
+    const groups=[
+      ['① 入库 · 收集散落',['import-card','autocol-card']],
+      ['② 完结 + 分章节',['card-finish']],
+      ['③–⑥ 作者整理（找回 · 合并 · 规范）',['card-recover','card-author-content','card-normalize','card-merge']],
+      ['⑦ 去重',['card-dedup']],
+      ['⑧ AI 打标签',['card-classify']],
+      ['辅助 · 维护 · 找回',['proc-card','dups-card','meta-card','card-audit','card-recover-reviews']],
+    ];
+    let anchor=guide;
+    groups.forEach(([title,ids])=>{
+      const h=document.createElement('h2');h.className='sec-h';h.textContent=title;
+      anchor.after(h);anchor=h;
+      ids.forEach(id=>{const el=document.getElementById(id);if(el){anchor.after(el);anchor=el;}});
+    });
+  }catch(e){}
+}
+
+// ── 流水线导航：跳到对应卡片并闪一下 ──
+function goStep(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.remove('card-flash');void el.offsetWidth;el.classList.add('card-flash');
+}
+
+// ── 按正文找回/合并作者 ──
+async function startAuthorByContent(apply){
+  if(apply && !confirm('确认按正文标记合并同一作者的不同笔名？数据库会自动备份。')) return;
+  const r=await (await fetch('/api/admin/task/author_by_content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apply})})).json();
+  if(!r.task_id){alert('启动失败');return;}
+  pollTask(r.task_id,'abc',(t)=>{
+    const el=document.getElementById('abc-result');el.classList.add('show');
+    const ex=(t.detail&&t.detail.examples)||[];
+    if(ex.length){
+      el.innerHTML=`找到 <b>${t.detail.clusters}</b> 组笔名、可归一 <b>${t.detail.changed}</b> 本：<br>`+
+        '<table><tr><th>正文标记</th><th>这些笔名</th><th>→ 归为</th></tr>'+
+        ex.map(e=>`<tr><td style="color:var(--text2);font-size:12px">${escH(e.handle)}</td><td style="color:var(--text2);font-size:12px">${escH((e.froms||[]).join('、'))}</td><td class="keep">${escH(e.to)}</td></tr>`).join('')+'</table>';
+      if(t.status==='done' && !t.message.includes('预览')) loadStats(true);
+    }else{ el.innerHTML=t.message||'没找到可按正文合并的作者'; }
+  });
+}
+
+// ── 补全核查 ──
+async function startAudit() {
+  const r = await (await fetch('/api/admin/task/audit', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})).json();
+  if (!r.task_id) { alert(r.detail || '需要配置 mrpro 路径（在 config.json 的 library.mrpro_path）'); return; }
+  pollTask(r.task_id, 'audit', (t) => {
+    if (t.status === 'done') {
+      const el = document.getElementById('audit-result');
+      el.classList.add('show');
+      const d = t.detail;
+      let html = `母库 ${d.lib_total} 本 / 平板 ${d.tablet_total} 本<br>`;
+      html += '<table><tr><th>作者</th><th>母库</th><th>平板</th><th>缺额</th></tr>';
+      d.diffs.forEach(x => {
+        html += `<tr><td>${escH(x.author)}</td><td>${x.lib}</td><td>${x.tablet}</td><td class="remove">+${x.diff}</td></tr>`;
+      });
+      html += '</table>';
+      el.innerHTML = html;
+    }
+  });
+}
+
+async function startFinished(resume) {
+  const r = await (await fetch('/api/admin/task/detect_finished', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({resume: resume !== false})})).json();
+  if (!r.task_id) { alert(r.detail || '启动失败'); return; }
+  pollTask(r.task_id, 'finished', (t) => {
+    const el = document.getElementById('finished-result');
+    el.classList.add('show');
+    const d = t.detail || {};
+    if (d.total) {
+      el.innerHTML = `进度 <b>${(d.scanned||0).toLocaleString()}/${d.total.toLocaleString()}</b><br>完结 <b class="keep">${(d.finished||0).toLocaleString()}</b> · 连载/未完 ${(d.ongoing||0).toLocaleString()} · 未知 ${(d.unknown||0).toLocaleString()}`;
+    } else if (t.status === 'done') {
+      el.innerHTML = t.message;
+    }
+  });
+}
+
+function cancelTask(prefix) {
+  const tid = window['_' + prefix + 'TaskId'];
+  if (tid) fetch('/api/admin/task/' + tid + '/cancel', {method:'POST'});
+}
+
+function escH(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+let _allReviews=[];
+async function listAllReviews(){
+  const r=await (await fetch('/api/admin/task/list_reviews',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
+  if(!r.task_id){alert('启动失败');return;}
+  pollTask(r.task_id,'rrv',(t)=>{
+    const el=document.getElementById('rrv-result');el.classList.add('show');
+    _allReviews=(t.detail&&t.detail.reviews)||[];
+    if(!_allReviews.length){el.innerHTML=t.message||'没找到任何总评';return;}
+    el.innerHTML='<div style="margin-bottom:8px;color:var(--text2)">'+escH(t.message||'')+'</div>'+
+      _allReviews.map((v,i)=>`<div style="padding:9px 0;border-bottom:1px solid var(--border)">`+
+        `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">`+
+        `<b>${escH(v.title)}</b>${v.author?'<span style="color:var(--text2);font-size:12px">— '+escH(v.author)+'</span>':''}`+
+        `<button class="btn secondary" style="padding:3px 12px;font-size:12px;flex:0 0 auto" onclick="copyReview(${i},this)">复制</button></div>`+
+        `<div style="white-space:pre-wrap;color:var(--text);margin-top:4px;line-height:1.65">${escH(v.review)}</div>`+
+        (v.sources?`<div style="color:var(--text2);font-size:11px;margin-top:4px">来源：${escH(v.sources)}</div>`:'')+
+        `</div>`).join('');
+  });
+}
+function copyReview(i,btn){
+  const v=_allReviews[i];if(!v)return;
+  const txt=v.review||'';
+  const done=()=>{if(btn){btn.textContent='已复制';setTimeout(()=>btn.textContent='复制',1200);}};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(done);}
+  else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);done();}
+}
+async function loadDups(){
+  const box=document.getElementById('dups-box');box.innerHTML='<div class="progress-msg">加载中…</div>';
+  try{
+    const r=await (await fetch('/api/admin/duplicates')).json();
+    if(!r.groups||!r.groups.length){box.innerHTML='<div class="progress-msg">没有记录在案的重复副本。</div>';return;}
+    box.innerHTML=r.groups.map(g=>`<div style="border:1px solid #e6ddcb;border-radius:10px;padding:12px;margin:10px 0">
+      <div style="font-weight:600">保留：${escH(g.title||'(未知)')} <span style="color:#8a7f70;font-weight:400">· ${escH(g.author||'')} · ${g.word_count||0}万字</span></div>
+      ${(g.dups||[]).map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:13px;color:#6b6256">
+        <span style="word-break:break-all">副本：${escH(d.original_path||d.dup_path||'(未保留实体)')}${d.reason?'（'+escH(d.reason)+'）':''}</span>
+        <button class="btn secondary" style="padding:5px 12px;flex:0 0 auto" onclick="restoreDup(${d.dup_id},this)">找回</button></div>`).join('')}
+    </div>`).join('');
+  }catch(e){box.innerHTML='<div class="progress-msg">读取失败</div>';}
+}
+async function restoreDup(id,btn){
+  btn.disabled=true;btn.textContent='找回中…';
+  try{const r=await (await fetch('/api/admin/duplicate/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dup_id:id})})).json();
+    if(r.ok){btn.textContent='已找回';loadStats(true);}else{btn.disabled=false;btn.textContent='找回';alert('找回失败：'+(r.error||''));}
+  }catch(e){btn.disabled=false;btn.textContent='找回';alert('找回失败');}
+}
+async function exportMeta(){
+  try{const r=await (await fetch('/api/admin/metadata/export')).json();
+    const blob=new Blob([JSON.stringify(r,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='mylibrary_metadata_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);a.click();a.remove();
+  }catch(e){alert('导出失败');}
+}
+async function importMeta(input){
+  const f=input.files[0];if(!f)return;
+  const msg=document.getElementById('meta-msg');msg.textContent='导入中…';
+  try{
+    let res;
+    if(f.name.toLowerCase().endsWith('.mrpro')){
+      const fd=new FormData();fd.append('file',f);
+      res=await (await fetch('/api/admin/metadata/import',{method:'POST',body:fd})).json();
+    }else{
+      const text=await f.text();
+      res=await (await fetch('/api/admin/metadata/import',{method:'POST',headers:{'Content-Type':'application/json'},body:text})).json();
+    }
+    if(res.ok){msg.textContent=`匹配 ${res.matched}/${res.incoming} 本 · 回填元数据 ${res.meta_updated} · 新增标签 ${res.tags_added}`;loadStats(true);}
+    else msg.textContent='导入失败：'+(res.error||'');
+  }catch(e){msg.textContent='导入失败';}
+  input.value='';
+}
+
+// ── 与主页同步主题（读 localStorage 的 tt_mode + 用户上传背景）──
+function timeThemeByHour(){const h=new Date().getHours();if(h>=5&&h<9)return'dawn';if(h>=9&&h<17)return'day';if(h>=17&&h<20)return'dusk';return'night';}
+function applyAdminTheme(){
+  const mode=localStorage.getItem('tt_mode')||'auto';
+  document.body.setAttribute('data-tt',(mode==='auto')?timeThemeByHour():mode);
+  if(mode==='auto'){setInterval(()=>document.body.setAttribute('data-tt',timeThemeByHour()),600000);}
+}
+async function applyAdminBg(){
+  try{
+    const r=await(await fetch('/api/theme/list')).json();const slots=r.slots||{};
+    if(slots.bg){const bg=document.getElementById('theme-bg');bg.style.backgroundImage=`url(${slots.bg})`;document.body.classList.add('has-bg');}
+  }catch(e){}
+}
+applyAdminTheme();
+applyAdminBg();
+reorderAdminCards();
+loadStats();
+
+// ── 全局后台任务指示条：轮询活动任务 ──
+async function pollBgTask(){
+  try{
+    const r=await(await fetch('/api/admin/active')).json();
+    const bar=document.getElementById('bgtask-bar');
+    if(r.active){
+      bar.style.display='block';
+      document.getElementById('bgtask-name').textContent=r.name;
+      document.getElementById('bgtask-fill').style.width=(r.progress||0)+'%';
+      document.getElementById('bgtask-msg').textContent=r.message||'处理中…';
+    }else{bar.style.display='none';}
+  }catch(e){}
+}
+setInterval(pollBgTask,1500);pollBgTask();
+</script>
+
+<!-- 全局后台任务指示条 -->
+<div id="bgtask-bar" style="display:none;position:fixed;right:18px;bottom:18px;z-index:9999;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 16px;box-shadow:0 8px 28px rgba(0,0,0,.16);max-width:300px;font-family:'Noto Serif SC',sans-serif;color:var(--text)">
+  <div style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" style="animation:bgspin 1.4s linear infinite"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg>
+    <span id="bgtask-name" style="font-weight:600">后台任务</span>
+  </div>
+  <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div id="bgtask-fill" style="height:100%;background:var(--accent);width:0;transition:width .4s"></div></div>
+  <div id="bgtask-msg" style="font-size:12px;color:var(--text2);margin-top:6px">—</div>
+</div>
+<style>@keyframes bgspin{to{transform:rotate(360deg)}}</style>
+</div>
+</body></html>

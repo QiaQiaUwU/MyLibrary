@@ -1,0 +1,39 @@
+# 个人/机密：绝不上传
+config.json
+*.db
+*.db-wal
+*.db-shm
+*.db.bak*
+*.bak_*
+_task_state.json
+*.mrpro
+*.log
+startup_error.log
+.deps_ok
+
+# 库内容（书、隔离区、回收站等，都在母库目录，通常不在项目里；以防万一）
+books/
+_recycle/
+_restored/
+_quarantine/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# 前端/工具
+node_modules/
+/static/_theme/
+.DS_Store
+Thumbs.db
+
+
+# PyInstaller 打包产物
+/build/
+/dist/
+*.exe
+*.spec.bak

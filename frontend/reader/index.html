@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>阅读 — MyLibrary</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/static/app-icon-192.png">
+<link rel="icon" type="image/svg+xml" href="/static/app-icon.svg">
+<meta name="theme-color" content="#9d8b7a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<!-- epub.js 只在打开 epub 时才按需加载，避免离线/CDN 不通时卡住整页（多数书是 txt）-->
+<style>
+:root{
+  --paper:#f4ecd8; --ink:#3a3226; --ink2:#6b5d48; --accent:#8a4b3a;
+  --ui-bg:#ece3cf; --ui-border:#d3c5a6; --ui-text:#4a3f30;
+  --font:'Noto Serif SC','Songti SC',serif; --fontsize:19px; --lineheight:2.0;
+  --pagewidth:680px; --texture:none;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* 书桌装扮：两侧装饰图 */
+.desk-side{position:fixed;top:0;bottom:0;width:clamp(48px,16vw,300px);z-index:0;pointer-events:none;background-size:cover;background-position:center;background-repeat:no-repeat;opacity:.92;display:none}
+#desk-left{left:0;-webkit-mask-image:linear-gradient(90deg,#000 60%,transparent);mask-image:linear-gradient(90deg,#000 60%,transparent)}
+#desk-right{right:0;-webkit-mask-image:linear-gradient(270deg,#000 60%,transparent);mask-image:linear-gradient(270deg,#000 60%,transparent)}
+body.has-desk-l #desk-left{display:block}
+body.has-desk-r #desk-right{display:block}
+body{font-family:var(--font);background:var(--paper);color:var(--ink);height:100vh;overflow:hidden;position:fixed;width:100%}
+
+/* ── 顶栏（点击中央区域显示/隐藏）── */
+.topbar{position:fixed;top:0;left:0;right:0;height:48px;background:var(--ui-bg);border-bottom:1px solid var(--ui-border);
+  display:flex;align-items:center;gap:14px;padding:0 16px;z-index:50;transition:transform .25s;transform:translateY(-100%)}
+.topbar.show{transform:translateY(0)}
+.topbar a,.topbar .tb-btn{color:var(--accent);text-decoration:none;font-size:14px;cursor:pointer;background:none;border:none;font-family:inherit;white-space:nowrap}
+.topbar .title{font-weight:600;font-size:14px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ui-text)}
+
+/* ── 底栏 ── */
+.botbar{position:fixed;bottom:0;left:0;right:0;height:52px;background:var(--ui-bg);border-top:1px solid var(--ui-border);
+  display:flex;align-items:center;justify-content:space-around;z-index:50;transition:transform .25s;transform:translateY(100%)}
+.botbar.show{transform:translateY(0)}
+.botbar .bb-item{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--ui-text);font-size:11px;padding:6px 14px;background:none;border:none;font-family:inherit}
+.botbar .bb-item svg{width:21px;height:21px;fill:var(--ui-text);stroke:none}
+.botbar .bb-item:active{color:var(--accent)}
+.botbar .bb-item:active svg{fill:var(--accent);stroke:none}
+.botbar .bb-item.quill svg{width:22px;height:22px}
+
+/* ── 滚动模式 ── */
+#scroll-view{height:100vh;overflow-y:auto;padding:60px 0 80px;-webkit-overflow-scrolling:touch;display:none}
+#scroll-view.active{display:block}
+#scroll-content{max-width:var(--pagewidth);margin:0 auto;padding:0 34px;
+  font-size:var(--fontsize);line-height:var(--lineheight);text-align:justify;white-space:pre-wrap;word-break:break-word}
+
+/* ── 翻页模式（卷纸）── */
+#page-view{height:100vh;display:none;position:relative;overflow:hidden;perspective:1500px}
+#page-view.active{display:block}
+/* StPageFlip 容器与页面 */
+#flip-book{margin:0 auto;height:calc(100vh - 100px)}
+.flip-page{background:var(--paper);overflow:hidden}
+.flip-page-content{width:100%;height:100%;padding:54px 34px 64px;box-sizing:border-box;
+  font-size:var(--fontsize);line-height:var(--lineheight);text-align:justify;white-space:pre-wrap;word-break:break-word;
+  color:var(--text);position:relative;background:var(--paper)}
+.flip-pageno{position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:12px;color:var(--ink2)}
+/* StPageFlip 的纸张阴影 */
+.stf__parent{margin:0 auto}
+.stf__wrapper{margin:0 auto}
+.page-stack{position:absolute;inset:0;transform-style:preserve-3d}
+.page-sheet{position:absolute;inset:0;background:var(--paper);padding:54px 34px 64px;overflow:hidden;
+  max-width:var(--pagewidth);margin:0 auto;left:0;right:0;
+  font-size:var(--fontsize);line-height:var(--lineheight);text-align:justify;white-space:pre-wrap;word-break:break-word;
+  will-change:transform;backface-visibility:hidden}
+.page-sheet.page-under{z-index:1}
+.page-sheet.page-top{z-index:2;box-shadow:0 0 1px rgba(0,0,0,.05)}
+/* Moon+ 风格段落：段与段之间留白；首行缩进沿用原文里的全角空格（pre-wrap 保留） */
+.rp{margin:0;padding:0 0 .62em;white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word}
+.rp:last-child{padding-bottom:0}
+#page-measure .rp:last-child{padding-bottom:.62em}
+/* 内置 CSS 3D 翻页：绕左缘(书脊)翻折的那一页 */
+.page-sheet.page-fold{z-index:3;transform-origin:left center;box-shadow:0 14px 38px rgba(0,0,0,.28);will-change:transform;backface-visibility:hidden}
+.fold-shade{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .62s ease;
+  background:linear-gradient(105deg,rgba(0,0,0,.06),rgba(0,0,0,.30) 26%,rgba(0,0,0,.10) 52%,rgba(255,255,255,.16) 82%,rgba(255,255,255,.04))}
+/* 翻动时顶层边缘的阴影渐变（模拟纸张卷起的暗部）*/
+.page-shadow{position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:linear-gradient(to left,rgba(0,0,0,.18),transparent 22%);transition:opacity .1s}
+/* 纸张纹理叠加 */
+.texture-overlay{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0.5;background-image:var(--texture);background-size:cover}
+.page-num{position:absolute;bottom:22px;left:0;right:0;text-align:center;font-size:12px;color:var(--ink2);z-index:3}
+
+/* ── 翻页按钮区（左右点击）── 设为不拦截：翻页/呼出工具栏改由点击位置判断，
+   这样书页文字可以正常选中来划重点，也不会"跟着鼠标走" ── */
+.tap-left,.tap-right{position:fixed;top:48px;bottom:52px;width:30%;z-index:10;pointer-events:none}
+.tap-left{left:0}.tap-right{right:0}
+.tap-center{position:fixed;top:48px;bottom:52px;left:30%;width:40%;z-index:10;pointer-events:none}
+/* 常驻菜单浮钮 */
+.fab-menu{position:fixed;right:18px;bottom:18px;width:46px;height:46px;border-radius:50%;background:var(--ui-bg);border:1px solid var(--ui-border);box-shadow:0 3px 14px rgba(0,0,0,.18);cursor:pointer;z-index:45;display:none;align-items:center;justify-content:center;transition:opacity .25s,transform .25s}
+.fab-menu svg{width:22px;height:22px;stroke:var(--accent);fill:var(--accent);stroke-width:0}
+.fab-menu:hover{transform:scale(1.08)}
+.fab-menu:active{transform:scale(.94)}
+/* 工具栏显示时浮钮淡出 */
+body.ui-on .fab-menu{opacity:0;pointer-events:none;transform:scale(.6)}
+/* Quill 悬浮球（右下角，和书房一致）*/
+.quill-fab{position:fixed;right:22px;bottom:22px;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;z-index:60;
+  background:linear-gradient(135deg,var(--accent),#7c6a5a);box-shadow:0 6px 20px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;transition:transform .2s,opacity .2s}
+.quill-fab svg{width:26px;height:26px;fill:#fff;stroke:#fff}
+.quill-fab:hover{transform:scale(1.08) rotate(-8deg)}
+.quill-fab:active{transform:scale(.94)}
+.quill-fab.hidden{display:none}
+/* 球显示时，把菜单钮挪上去，免得叠一起 */
+.quill-fab:not(.hidden) ~ .fab-menu,
+body:has(.quill-fab:not(.hidden)) .fab-menu{bottom:86px}
+
+/* ── 设置面板 ── */
+.panel{position:fixed;bottom:0;left:0;right:0;background:var(--ui-bg);border-top:1px solid var(--ui-border);
+  z-index:60;transform:translateY(100%);transition:transform .3s;max-height:75vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:18px 20px 30px}
+.panel.show{transform:translateY(0)}
+.panel h3{font-size:15px;margin-bottom:14px;color:var(--ui-text);display:flex;justify-content:space-between;align-items:center}
+.panel h3 .close{cursor:pointer;font-size:20px;color:var(--ink2)}
+.panel-section{margin-bottom:20px}
+.panel-label{font-size:12px;color:var(--ink2);margin-bottom:8px}
+.opt-row{display:flex;gap:8px;flex-wrap:wrap}
+.opt{padding:7px 14px;border:1px solid var(--ui-border);border-radius:8px;background:var(--paper);cursor:pointer;font-size:13px;font-family:inherit;color:var(--ui-text)}
+.opt.sel{border-color:var(--accent);background:var(--accent);color:#fff}
+/* 皮肤色块 */
+.skin-row{display:flex;gap:10px;flex-wrap:wrap}
+.skin{width:48px;height:48px;border-radius:10px;cursor:pointer;border:2px solid transparent;position:relative}
+.skin.sel{border-color:var(--accent)}
+.skin.sel::after{content:'';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:bold;font-size:18px;text-shadow:0 0 3px rgba(255,255,255,.8)}
+/* 字号滑块 */
+.slider-row{display:flex;align-items:center;gap:12px}
+.slider-row input[type=range]{flex:1;accent-color:var(--accent)}
+.slider-val{font-size:13px;color:var(--ui-text);min-width:44px;text-align:right}
+
+/* ── AI 助手抽屉 ── */
+.ai-drawer{position:fixed;right:20px;bottom:20px;width:min(400px,92vw);height:min(64vh,540px);background:var(--ui-bg);z-index:100;
+  border:1px solid var(--ui-border);border-radius:16px;transform:translateY(18px) scale(.98);opacity:0;pointer-events:none;
+  transition:transform .26s,opacity .26s;display:flex;flex-direction:column;box-shadow:0 12px 44px rgba(0,0,0,.30);overflow:hidden}
+.ai-drawer.show{transform:translateY(0) scale(1);opacity:1;pointer-events:auto}
+.ai-head{position:relative;padding:12px 16px;border-bottom:1px solid var(--ui-border);font-weight:600;display:flex;justify-content:space-between;align-items:center;color:var(--ui-text);cursor:move;user-select:none;touch-action:none}
+.ai-head::before{content:"⋮⋮";position:absolute;left:50%;transform:translateX(-50%);color:var(--ink2);opacity:.4;letter-spacing:-2px;pointer-events:none}
+.ai-head .close{cursor:pointer;font-size:22px;color:var(--ink2)}
+.ai-msgs{flex:1;overflow-y:auto;padding:14px}
+/* Quill 历史对话列表 */
+.qh-head{display:flex;align-items:center;justify-content:space-between;font-weight:600;color:var(--ui-text);padding:2px 2px 12px;border-bottom:1px solid var(--ui-border);margin-bottom:10px}
+.qh-new{font-weight:400;font-size:13px;color:var(--accent);cursor:pointer}
+.qh-item{position:relative;padding:11px 12px;border:1px solid var(--ui-border);border-radius:10px;margin-bottom:8px;cursor:pointer;background:var(--paper)}
+.qh-item:hover{border-color:var(--accent)}
+.qh-t{font-size:14px;color:var(--ink);margin-bottom:3px;padding-right:36px}
+.qh-when{font-size:12px;color:var(--ink2)}
+.qh-del{position:absolute;right:10px;top:10px;font-size:12px;color:var(--ink2);cursor:pointer}
+.qh-del:hover{color:#c0392b}
+.qh-empty{color:var(--ink2);font-size:13px;padding:14px;text-align:center}
+.ai-newchat{cursor:pointer;font-size:12px;color:var(--ink2);font-weight:500}
+.ai-newchat:hover{color:var(--accent)}
+.ai-msg .msg-acts{display:none;gap:12px;margin-top:5px}
+.ai-msg:hover .msg-acts{display:flex}
+.ai-msg.failed .msg-acts{display:flex}
+.ai-msg .msg-act{font-size:11px;color:var(--ink2);cursor:pointer}
+.ai-msg .msg-act:hover{color:var(--accent)}
+.ai-msg.failed .msg-text{color:#d98a8a}
+.ai-msg{margin-bottom:12px;padding:10px 13px;border-radius:12px;font-size:14px;line-height:1.7}
+.ai-msg.user{background:var(--accent);color:#fff;margin-left:36px;border-bottom-right-radius:3px}
+.ai-msg.bot{background:var(--paper);border:1px solid var(--ui-border);margin-right:20px;border-bottom-left-radius:3px}
+.ai-msg .meta{font-size:11px;color:var(--ink2);margin-top:6px;padding-top:6px;border-top:1px dashed var(--ui-border)}
+.ai-input{padding:12px;border-top:1px solid var(--ui-border);display:flex;gap:8px}
+.ai-input input{flex:1;padding:9px 13px;border:1px solid var(--ui-border);border-radius:9px;font-size:14px;font-family:inherit;background:var(--paper);color:var(--ink)}
+.ai-input button{padding:9px 16px;background:var(--accent);color:#fff;border:none;border-radius:9px;cursor:pointer;font-family:inherit}
+
+/* ── 列表抽屉（书签/高亮/目录）── */
+.list-drawer{position:fixed;top:0;left:0;bottom:0;width:min(360px,88%);background:var(--ui-bg);z-index:100;
+  transform:translateX(-100%);transition:transform .3s;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,.15)}
+.list-drawer.show{transform:translateX(0)}
+.list-head{padding:14px 16px;border-bottom:1px solid var(--ui-border);display:flex;gap:16px;color:var(--ui-text)}
+.list-tab{cursor:pointer;font-size:14px;padding-bottom:4px;border-bottom:2px solid transparent;color:var(--ink2)}
+.list-tab.sel{color:var(--accent);border-color:var(--accent);font-weight:600}
+.hl-item{position:relative}
+.hl-actions{float:right;display:flex;gap:10px;margin-left:8px}
+.hl-act{font-size:12px;color:var(--accent);cursor:pointer}
+.li-note{clear:both;margin-top:6px;font-size:13px;color:var(--ink2);background:var(--paper-raised,rgba(0,0,0,.04));border-radius:8px;padding:7px 10px;line-height:1.5}
+.list-body{flex:1;overflow-y:auto;padding:10px}
+.list-item{padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:6px;background:var(--paper);font-size:13px;border:1px solid var(--ui-border)}
+.list-item:active{background:var(--ui-border)}
+.list-item .li-title{font-weight:500;margin-bottom:2px}
+.list-item .li-sub{font-size:12px;color:var(--ink2)}
+.list-item .li-del{float:right;color:var(--accent);cursor:pointer;font-size:12px}
+
+/* ── 选中文字弹出菜单 ── */
+.sel-menu{position:fixed;z-index:80;background:#2a2218;border-radius:10px;padding:4px;display:none;gap:2px;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.sel-menu.show{display:flex}
+.sel-menu button{background:none;border:none;color:#f0e8d6;padding:8px 12px;font-size:13px;cursor:pointer;border-radius:7px;font-family:inherit;white-space:nowrap}
+.sel-menu button:active{background:rgba(255,255,255,.15)}
+.sel-menu .color-dot{width:18px;height:18px;border-radius:50%;display:inline-block;margin:0 2px;cursor:pointer;border:1px solid rgba(255,255,255,.3)}
+/* 手机上停靠到底部正中，整排更大更好点 */
+.sel-menu.docked{left:50%!important;top:auto!important;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:9px 12px;gap:6px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.4);max-width:94vw;flex-wrap:wrap;justify-content:center}
+.sel-menu.docked .color-dot{width:30px;height:30px;margin:0 3px}
+.sel-menu.docked button{padding:10px 16px;font-size:15px}
+/* 笔记手账化 */
+.note-add-bar{padding:8px 4px 12px}
+.note-add-btn{width:100%;font-family:inherit;font-size:14px;color:var(--r-accent,#8a6f5c);background:var(--r-accent-soft,rgba(138,111,92,.1));border:1px dashed var(--r-accent,#8a6f5c);border-radius:10px;padding:10px;cursor:pointer}
+.note-cards{display:flex;flex-direction:column;gap:10px}
+.note-card{background:var(--r-paper-raised,#fff);border:1px solid var(--r-line,#e0d8cb);border-radius:12px;padding:12px 14px;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.note-card-del{position:absolute;right:8px;top:6px;font-size:18px;color:var(--r-ink-faint,#b5ac9c);cursor:pointer;line-height:1}
+.note-card-img{width:100%;border-radius:8px;margin-bottom:8px;display:block}
+.note-card-title{font-weight:600;font-size:14px;margin-bottom:4px;color:var(--r-ink,#2b2620)}
+.note-card-body{font-size:13px;color:var(--r-ink-soft,#8a8175);line-height:1.6;cursor:pointer;white-space:pre-wrap}
+.note-editor{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:120;display:none;align-items:center;justify-content:center}
+.note-editor.show{display:flex}
+.ne-panel{background:var(--r-paper-raised,#fbf8f1);border-radius:16px;width:min(440px,92%);padding:18px;box-shadow:0 16px 50px rgba(0,0,0,.3)}
+.ne-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:15px;font-weight:600;color:var(--r-ink,#2b2620)}
+.ne-head button{background:none;border:none;font-size:22px;color:var(--r-ink-faint,#b5ac9c);cursor:pointer}
+.ne-title{width:100%;font-family:inherit;font-size:15px;padding:10px;border:1px solid var(--r-line,#e0d8cb);border-radius:8px;background:var(--r-paper,#f3eee3);color:var(--r-ink,#2b2620);margin-bottom:10px;outline:none}
+.ne-content{width:100%;min-height:120px;resize:vertical;font-family:inherit;font-size:14px;padding:10px;border:1px solid var(--r-line,#e0d8cb);border-radius:8px;background:var(--r-paper,#f3eee3);color:var(--r-ink,#2b2620);outline:none;line-height:1.6}
+.ne-img-prev{margin:10px 0}
+.ne-img-prev img{width:100%;border-radius:8px;display:block}
+.ne-actions{display:flex;gap:10px;margin-top:12px}
+.ne-img-btn{flex:1;font-family:inherit;font-size:14px;color:var(--r-accent,#8a6f5c);background:var(--r-accent-soft,rgba(138,111,92,.1));border:none;border-radius:9px;padding:11px;cursor:pointer}
+.ne-save{flex:1;font-family:inherit;font-size:14px;color:#fff;background:var(--r-accent,#8a6f5c);border:none;border-radius:9px;padding:11px;cursor:pointer}
+
+/* 高亮标记 */
+.hl{border-radius:2px;padding:1px 0}
+.hl-sand{background:rgba(201,178,135,0.42)}
+.hl-sage{background:rgba(154,176,148,0.42)}
+.hl-mist{background:rgba(148,168,184,0.42)}
+.hl-rose{background:rgba(196,158,158,0.42)}
+.hl-lilac{background:rgba(170,160,186,0.42)}
+.hl-clay{background:rgba(196,148,128,0.40)}
+/* 兼容旧的颜色名 */
+.hl-yellow{background:rgba(201,178,135,0.42)}
+.hl-green{background:rgba(154,176,148,0.42)}
+.hl-blue{background:rgba(148,168,184,0.42)}
+.hl-pink{background:rgba(196,158,158,0.42)}
+/* 划线列表里的换色小圆点（不删重画即可改色） */
+.li-colors{margin-top:7px;display:flex;gap:7px;clear:both}
+.li-cdot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:1px solid rgba(0,0,0,.18);opacity:.7}
+.li-cdot.on{outline:2px solid var(--accent);outline-offset:1px;opacity:1}
+/* 划线的内嵌笔记编辑：随输入变高的框（不是白色弹窗）+ 改色 */
+.hl-item.editing{background:var(--paper-raised,rgba(0,0,0,.04));border-radius:10px;padding:10px}
+.hl-note-input{display:block;width:100%;box-sizing:border-box;margin-top:8px;min-height:40px;max-height:320px;resize:none;overflow-y:auto;
+  background:var(--paper,#fbf7ef);color:var(--ink,#333);border:1px solid var(--accent);border-radius:9px;padding:9px 11px;
+  font-family:inherit;font-size:14px;line-height:1.6;outline:none}
+.hl-edit-row{display:flex;align-items:center;justify-content:space-between;margin-top:9px;gap:10px}
+.hl-act.done{font-weight:600;padding:5px 14px;border:1px solid var(--accent);border-radius:8px}
+/* 划线菜单浮在选区旁（不再固定屏幕底部），手机上自动换行 */
+.sel-menu{flex-wrap:wrap;align-items:center;max-width:264px}
+/* 翻页滑入动画分层：底层是相邻页，顶层滑入 */
+.page-sheet.page-under{z-index:1}
+.page-sheet.page-top{z-index:2;will-change:transform}
+
+/* 遮罩 */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:55;display:none}
+.overlay.show{display:block}
+
+/* 白噪音浮窗 */
+.ambient-panel{position:fixed;bottom:60px;right:16px;background:var(--ui-bg);border:1px solid var(--ui-border);border-radius:14px;padding:14px;z-index:65;width:250px;max-width:calc(100vw - 24px);max-height:calc(100vh - 96px);overflow-y:auto;display:none;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.model-switch{position:fixed;right:22px;bottom:86px;width:240px;max-width:calc(100vw - 24px);background:var(--ui-bg);border:1px solid var(--ui-border);border-radius:14px;padding:10px;z-index:75;display:none;box-shadow:0 6px 24px rgba(0,0,0,.28)}
+.model-switch.show{display:block}
+.model-switch .ms-head{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ui-text);margin:2px 4px 8px}
+.model-switch .ms-empty{font-size:12px;color:var(--ink2);padding:4px 4px 10px;line-height:1.6}
+.model-switch .ms-item{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;text-align:left;padding:8px 10px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ui-text);cursor:pointer}
+.model-switch .ms-item:hover{background:rgba(255,255,255,.06)}
+.model-switch .ms-item.on{border-color:var(--accent)}
+.model-switch .ms-item b{font-size:13px;font-weight:600}
+.model-switch .ms-item span{font-size:11px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}
+.model-switch .ms-item i{font-style:normal;font-size:10px;color:var(--accent)}
+.model-switch .ms-foot{text-align:right;margin-top:6px}
+.model-switch .ms-foot button{font-size:12px;padding:4px 12px;border:1px solid var(--ui-border);border-radius:999px;background:transparent;color:var(--ui-text);cursor:pointer}
+.ambient-panel.show{display:block}
+.amb-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;font-family:var(--sans);font-size:14px;font-weight:600;color:var(--ui-text);cursor:move;user-select:none;touch-action:none;white-space:nowrap}
+.amb-mute{margin-left:auto;padding:3px 9px;border:1px solid var(--ui-border);border-radius:999px;background:transparent;color:var(--ui-text);font-size:12px;cursor:pointer;flex:0 0 auto;white-space:nowrap}
+.amb-mute:hover{border-color:var(--accent);color:var(--accent)}
+.amb-close{cursor:pointer;font-size:20px;color:var(--ui-text);opacity:.6;line-height:1;padding:0 4px}
+.amb-close:hover{opacity:1}
+.ambient-grid{display:flex;flex-direction:column;gap:7px;margin-bottom:10px;max-height:46vh;overflow-y:auto}
+.amb-tip{font-size:11px;color:var(--ui-text);opacity:.6;margin-bottom:8px}
+.amb-item{display:flex;align-items:center;gap:8px}
+.amb-btn{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--ui-border);border-radius:8px;background:var(--paper);cursor:pointer;font-size:12.5px;text-align:left;color:var(--ui-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amb-btn.on{border-color:var(--accent);background:var(--accent);color:#fff}
+.amb-vol{flex:0 0 78px;accent-color:var(--accent)}
+.amb-vol:disabled{opacity:.35}
+.amb-stopall{margin-top:4px;width:100%;padding:7px;border:1px solid var(--ui-border);border-radius:8px;background:transparent;color:var(--ui-text);font-size:12px;cursor:pointer}
+.amb-stopall:hover{border-color:var(--accent);color:var(--accent)}
+.amb-vol{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2)}
+.amb-vol input{flex:1;accent-color:var(--accent)}
+.music-links{margin-top:10px;padding-top:10px;border-top:1px solid var(--ui-border);display:flex;gap:8px}
+.music-links a{flex:1;text-align:center;padding:7px;border-radius:7px;background:var(--paper);border:1px solid var(--ui-border);color:var(--accent);font-size:12px;text-decoration:none}
+
+@media(max-width:600px){
+  :root{--pagewidth:100%}
+  /* 顶部留出状态栏/刘海的高度 + 返回钮的位置，正文不再顶到最上面 */
+  #scroll-view{padding:calc(58px + env(safe-area-inset-top,0px)) 0 calc(90px + env(safe-area-inset-bottom,0px))}
+  #scroll-content{padding:0 18px}
+  /* 背景一律纸色，消除翻页容器空着时露出的白块 */
+  #page-view,#flip-book,#page-stack{background:var(--paper)}
+  .page-sheet{padding:46px 18px 56px}
+  /* 手机上字号/行距更舒服一点（用户没自定义时） */
+  #scroll-content{font-size:max(17px, var(--fontsize))}
+  .quill-fab{right:16px;bottom:16px;width:50px;height:50px}
+}
+
+/* 常驻返回钮（永远可见，不随工具栏隐藏）——保证任何情况下都能回书房 */
+/* 始终可见的阅读进度条 + 右上角百分比（可直接点/拖跳读） */
+#read-progress{position:fixed;top:0;left:0;right:0;height:18px;background:transparent;z-index:90;pointer-events:auto;cursor:pointer;touch-action:none;transition:top .25s,height .2s}
+.reader-loading{padding:80px 28px;text-align:center;color:var(--ink2,#999);font-size:15px;line-height:1.8}
+#read-progress-fill{height:3px;width:0;background:var(--accent);transition:width .3s;border-radius:0 2px 2px 0;position:relative}
+#read-progress:hover #read-progress-fill,#read-progress.seeking #read-progress-fill{height:6px;transition:width .05s}
+#read-progress-fill::after{content:"";position:absolute;right:-7px;top:50%;width:14px;height:14px;border-radius:50%;background:var(--accent);transform:translateY(-50%) scale(0);transition:transform .12s;box-shadow:0 1px 5px rgba(0,0,0,.35);border:2px solid var(--ui-bg)}
+#read-progress:hover #read-progress-fill::after,#read-progress.seeking #read-progress-fill::after{transform:translateY(-50%) scale(1)}
+/* 工具栏出来时：把进度条移到标题栏下方、加高加粗、把小圆点常显出来——一眼能看见、随手能拖 */
+body.ui-on #read-progress{top:48px;height:26px;background:linear-gradient(var(--ui-bg),transparent)}
+body.ui-on #read-progress-fill{height:6px;position:relative;top:3px}
+body.ui-on #read-progress-fill::after{transform:translateY(-50%) scale(1)}
+body.ui-on #read-progress::before{content:"";position:absolute;left:0;right:0;top:3px;height:6px;background:var(--ui-border);opacity:.5;border-radius:3px}
+.hl-menu{position:fixed;z-index:120;background:var(--ui-bg);border:1px solid var(--ui-border);border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.22);padding:9px 11px;display:flex;flex-direction:column;gap:8px;user-select:none}
+.hl-menu .hlm-colors{display:flex;gap:9px}
+.hl-menu .hlm-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .12s}
+.hl-menu .hlm-dot:hover{transform:scale(1.12)}
+.hl-menu .hlm-dot.on{border-color:var(--ui-text)}
+.hl-menu .hlm-acts{display:flex;gap:6px;border-top:1px solid var(--ui-border);padding-top:7px}
+.hl-menu .hlm-len{display:flex;gap:5px;border-top:1px solid var(--ui-border);padding-top:7px}
+.hl-menu .hlm-len span{flex:1;text-align:center;font-size:12px;color:var(--ink2);cursor:pointer;padding:4px 6px;border-radius:7px;background:var(--paper);border:1px solid var(--ui-border)}
+.hl-menu .hlm-len span:hover{color:var(--accent);border-color:var(--accent)}
+.hl-menu .hlm-acts span{flex:1;text-align:center;font-size:13px;color:var(--accent);cursor:pointer;padding:5px 12px;border-radius:8px}
+.hl-menu .hlm-acts span:hover{background:var(--ui-border)}
+#read-pct{position:fixed;top:10px;right:12px;z-index:80;font-size:11.5px;color:var(--accent);background:var(--ui-bg);border:1px solid var(--ui-border);border-radius:999px;padding:3px 10px;box-shadow:0 2px 8px rgba(0,0,0,.1);opacity:.92;font-family:inherit}
+body.ui-on #read-pct{opacity:0;transition:opacity .2s}
+.home-chip{position:fixed;top:10px;left:12px;z-index:80;display:flex;align-items:center;gap:5px;
+  height:34px;padding:0 13px 0 10px;border-radius:999px;background:var(--ui-bg);border:1px solid var(--ui-border);
+  color:var(--accent);font-size:13px;font-family:inherit;text-decoration:none;cursor:pointer;
+  box-shadow:0 2px 10px rgba(0,0,0,.14);opacity:.92;transition:opacity .2s,transform .2s}
+.home-chip:hover{opacity:1;transform:translateY(-1px)}
+.home-chip:active{transform:scale(.96)}
+.home-chip svg{width:16px;height:16px;fill:var(--accent)}
+/* 工具栏拉出时，返回钮让位给顶栏（顶栏里也有返回），避免重叠 */
+body.ui-on .home-chip{opacity:0;pointer-events:none}
+/* 独立小窗里：不显示返回钮（关窗口即可）；非小窗(主标签页)才显示 */
+html.in-popup .home-chip{display:none}
+html.in-popup .topbar>a[href="/"]{display:none}
+
+/* 正文加载/出错提示 */
+.reader-note{max-width:var(--pagewidth);margin:0 auto;padding:80px 28px;text-align:center;color:var(--ink2);font-size:15px;line-height:2}
+.reader-note .rn-bar{height:4px;background:var(--ui-border);border-radius:3px;overflow:hidden;margin:18px auto 0;max-width:240px}
+.reader-note .rn-fill{height:100%;width:0;background:var(--accent);transition:width .2s}
+.reader-note .rn-btn{display:inline-block;margin-top:18px;padding:9px 20px;border-radius:9px;background:var(--accent);color:#fff;text-decoration:none;font-size:14px}
+
+/* 分块正文：用 content-visibility 让浏览器只渲染可视块，长篇也不卡 */
+.rblock{white-space:pre-wrap;word-break:break-word;content-visibility:auto;contain-intrinsic-size:auto 600px}
+/* 翻页模式：每个 .page-sec 是一整页(视口可读高)，吸附让点一下干净落在下一整页；划线拖动时(.selecting)关掉吸附以便跨页续滚 */
+/* 翻页模式：禁掉手动滚动（滚轮/触摸拖动/滚动条都不动），但脚本仍可设 scrollTop 来“换页”；
+   划线时计时器自动续滚也走脚本 scrollTop，所以照常能跨页选。 */
+body.paged-read #scroll-view{overflow:hidden;scrollbar-width:none}
+body.paged-read #scroll-view::-webkit-scrollbar{width:0;height:0;display:none}
+/* 翻页换页的交叉淡入淡出：淡出→脚本瞬间换页→淡回，读着像翻了一页而不是在滚 */
+#scroll-content{transition:opacity .14s ease}
+#scroll-content.pg-fading{opacity:0}
+@keyframes pgturn{from{opacity:.35}to{opacity:1}}
+</style></head><body>
+
+<!-- 始终可见的阅读进度：顶部细条 + 右上角百分比 -->
+<div id="read-progress"><div id="read-progress-fill"></div></div>
+<div id="read-pct">0%</div>
+
+<!-- 常驻返回钮：任何时候都能点，回到书房主页 -->
+<a class="home-chip" href="/" title="返回书房">
+  <svg viewBox="0 0 24 24"><path d="M21 20a1 1 0 0 1-1 1h-5v-6h-4v6H6a1 1 0 0 1-1-1v-9H2L12 2l10 9h-3v9z"/></svg>书房
+</a>
+<script>/* 在独立小窗里打开时，关掉窗口即可，不需要"返回书房"按钮（点了它会把这个小窗变成主页，反而怪） */
+try{if(window.opener&&!window.opener.closed)document.documentElement.classList.add('in-popup');}catch(e){}</script>
+
+<div class="texture-overlay"></div>
+
+<!-- 书桌装扮：正文两侧留白处的自定义图（不挡正文，不可点） -->
+<div id="desk-left" class="desk-side"></div>
+<div id="desk-right" class="desk-side"></div>
+
+<!-- 顶栏 -->
+<div class="topbar" id="topbar">
+  <a href="/">‹ 书库</a>
+  <button class="tb-btn" onclick="toggleDrawer('list')">目录</button>
+  <span class="title" id="book-title" ondblclick="editReaderTitle()" title="双击改书名/作者" style="cursor:pointer">加载中…</span>
+</div>
+
+<!-- 滚动模式 -->
+<div id="scroll-view"><div id="scroll-content"></div></div>
+
+<!-- 翻页模式 -->
+<div id="page-view"><div id="flip-book"></div><div class="page-stack" id="page-stack"></div><div class="page-num" id="page-num"></div></div>
+
+<!-- 点击区 -->
+<div class="tap-left" id="tap-left"></div>
+<div class="tap-center" id="tap-center"></div>
+<div class="tap-right" id="tap-right"></div>
+
+<!-- 常驻浮动菜单钮（点了呼出工具栏，避免新用户找不到入口）-->
+<button class="fab-menu" id="fab-menu" onclick="toggleUI()" title="菜单">
+  <svg viewBox="0 0 24 24" class="ic"><path d="M12 3C10.9 3 10 3.9 10 5C10 6.1 10.9 7 12 7C13.1 7 14 6.1 14 5C14 3.9 13.1 3 12 3ZM12 17C10.9 17 10 17.9 10 19C10 20.1 10.9 21 12 21C13.1 21 14 20.1 14 19C14 17.9 13.1 17 12 17ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10Z"></path></svg>
+</button>
+<!-- Quill 悬浮球（右下角，和书房一致；外观设置里可隐藏）-->
+<button class="quill-fab" id="quill-fab" title="Quill">
+  <svg viewBox="0 0 24 24" id="quill-fab-icon"><path d="M21 1.99669C6 1.99669 4 15.9967 3 21.9967C3.66667 21.9967 4.33275 21.9967 4.99824 21.9967C5.66421 18.6636 7.33146 16.8303 10 16.4967C14 15.9967 17 12.4967 18 9.49669L16.5 8.49669C16.8333 8.16336 17.1667 7.83002 17.5 7.49669C18.5 6.49669 19.5042 4.99669 21 1.99669Z"></path></svg>
+</button>
+
+<!-- 底栏 -->
+<div class="botbar" id="botbar">
+  <button class="bb-item" onclick="openPanel('skin')">
+    <svg viewBox="0 0 24 24" class="ic"><path d="M12 21.9967C6.47715 21.9967 2 17.5196 2 11.9967C2 6.47386 6.47715 1.9967 12 1.9967C17.5228 1.9967 22 6.47386 22 11.9967C22 17.5196 17.5228 21.9967 12 21.9967ZM5.32889 16.422C6.76378 18.5675 9.20868 19.9803 11.9836 19.9803C16.4018 19.9803 19.9836 16.3985 19.9836 11.9803C19.9836 9.2053 18.5707 6.76034 16.4251 5.32547C17.2705 8.35324 16.5025 11.7369 14.1213 14.1181C11.7401 16.4993 8.3566 17.2672 5.32889 16.422Z"></path></svg>外观</button>
+  <button class="bb-item" onclick="toggleMode()">
+    <svg viewBox="0 0 24 24" class="ic" id="mode-icon"><path d="M3 4H21V6H3V4ZM3 11H21V13H3V11ZM3 18H21V20H3V18Z"></path></svg><span id="mode-label">滚动</span></button>
+  <button class="bb-item" onclick="addBookmark()">
+    <svg viewBox="0 0 24 24" class="ic"><path d="M5 2H19C19.5523 2 20 2.44772 20 3V22.1433C20 22.4194 19.7761 22.6434 19.5 22.6434C19.4061 22.6434 19.314 22.6168 19.2344 22.5669L12 18.0313L4.76559 22.5669C4.53163 22.7136 4.22306 22.6429 4.07637 22.4089C4.02647 22.3293 4 22.2373 4 22.1433V3C4 2.44772 4.44772 2 5 2Z"></path></svg>书签</button>
+  <button class="bb-item" onclick="toggleAmbient()">
+    <svg viewBox="0 0 24 24" class="ic"><path d="M2 16.0001H5.88889L11.1834 20.3319C11.2727 20.405 11.3846 20.4449 11.5 20.4449C11.7761 20.4449 12 20.2211 12 19.9449V4.05519C12 3.93977 11.9601 3.8279 11.887 3.73857C11.7121 3.52485 11.3971 3.49335 11.1834 3.66821L5.88889 8.00007H2C1.44772 8.00007 1 8.44778 1 9.00007V15.0001C1 15.5524 1.44772 16.0001 2 16.0001ZM23 12C23 15.292 21.5539 18.2463 19.2622 20.2622L17.8445 18.8444C19.7758 17.1937 21 14.7398 21 12C21 9.26016 19.7758 6.80629 17.8445 5.15557L19.2622 3.73779C21.5539 5.75368 23 8.70795 23 12ZM18 12C18 10.0883 17.106 8.38548 15.7133 7.28673L14.2842 8.71584C15.3213 9.43855 16 10.64 16 12C16 13.36 15.3213 14.5614 14.2842 15.2841L15.7133 16.7132C17.106 15.6145 18 13.9116 18 12Z"></path></svg>声音</button>
+</div>
+
+<!-- 外观设置面板 -->
+<div class="panel" id="panel-skin">
+  <h3>阅读设置 <span class="close" onclick="closePanel()">×</span></h3>
+  <div class="panel-section">
+    <div class="panel-label">主题皮肤</div>
+    <div class="skin-row" id="skin-row"></div>
+  </div>
+  <div class="panel-section">
+    <div class="panel-label">字号</div>
+    <div class="slider-row">
+      <input type="range" id="fontsize-slider" min="14" max="30" step="1" oninput="setFontSize(this.value)">
+      <span class="slider-val" id="fontsize-val">19px</span>
+    </div>
+  </div>
+  <div class="panel-section">
+    <div class="panel-label">行距</div>
+    <div class="opt-row">
+      <button class="opt" onclick="setLineHeight(1.6,this)">紧凑</button>
+      <button class="opt sel" onclick="setLineHeight(2.0,this)">标准</button>
+      <button class="opt" onclick="setLineHeight(2.4,this)">宽松</button>
+    </div>
+  </div>
+  <div class="panel-section">
+    <div class="panel-label">字体</div>
+    <div class="opt-row" id="font-row">
+      <button class="opt sel" onclick="setFont('serif',this)">宋体</button>
+      <button class="opt" onclick="setFont('kai',this)">楷体</button>
+      <button class="opt" onclick="setFont('hei',this)">黑体</button>
+      <button class="opt" onclick="setFont('fangsong',this)">仿宋</button>
+    </div>
+  </div>
+  <div class="panel-section">
+    <div class="panel-label">背景纹理</div>
+    <div class="opt-row" id="texture-row">
+      <button class="opt sel" onclick="setTexture('none',this)">无</button>
+      <button class="opt" onclick="setTexture('paper',this)">纸纹</button>
+      <button class="opt" onclick="setTexture('linen',this)">布纹</button>
+      <button class="opt" onclick="setTexture('grain',this)">颗粒</button>
+    </div>
+  </div>
+  <div class="panel-section">
+    <div class="panel-label">翻页音效</div>
+    <div class="opt-row">
+      <button class="opt sel" id="psound-on" onclick="setPageSound(true,this)">开</button>
+      <button class="opt" id="psound-off" onclick="setPageSound(false,this)">关</button>
+    </div>
+    <div class="slider-row" style="margin-top:8px">
+      <span style="font-size:12px;color:var(--ui-text);opacity:.7">音量</span>
+      <input type="range" id="pvol-slider" min="0" max="100" value="70" oninput="setPageVol(this.value)">
+    </div>
+  </div>
+  <div class="panel-section">
+    <div class="panel-label">Quill 悬浮球</div>
+    <div class="opt-row">
+      <button class="opt sel" id="quillball-on" onclick="setQuillBall(true,this)">显示</button>
+      <button class="opt" id="quillball-off" onclick="setQuillBall(false,this)">隐藏</button>
+    </div>
+  </div>
+</div>
+
+<!-- 声音浮窗 -->
+<div class="ambient-panel" id="ambient-panel">
+  <div class="amb-head" id="amb-head"><span>环境音</span><button class="amb-mute" onclick="stopAllAmbient()" title="关掉所有声音">静音</button><span class="amb-close" onclick="toggleAmbient()">×</span></div>
+  <div class="amb-tip">点名字播放/停止，右侧滑块单独调音量 · 顶栏可拖动</div>
+  <div class="ambient-grid" id="ambient-grid"></div>
+  <div class="music-links">
+    <a href="https://music.163.com" target="_blank">网易云</a>
+    <a href="https://y.qq.com" target="_blank">QQ音乐</a>
+  </div>
+</div>
+
+<!-- AI 抽屉 -->
+<div class="ai-drawer" id="ai-drawer">
+  <div class="ai-head"><span>Quill</span><span style="display:flex;gap:14px;align-items:center"><span class="ai-newchat" onclick="loadQuillHistory()" title="查看以前的对话">历史</span><span class="ai-newchat" onclick="clearChat()" title="清空当前对话，开新的一段">新对话</span><span class="close" onclick="closeAll()">×</span></span></div>
+  <div class="ai-msgs" id="ai-msgs"></div>
+  <div class="ai-input">
+    <input id="ai-input" placeholder="问 AI 任何问题…" onkeydown="if(event.key==='Enter')sendAI()">
+    <button onclick="sendAI()">发送</button>
+  </div>
+</div>
+
+<!-- 列表抽屉 -->
+<div class="list-drawer" id="list-drawer">
+  <div class="list-head">
+    <span class="list-tab sel" data-tab="toc" onclick="switchListTab('toc')">目录</span>
+    <span class="list-tab" data-tab="marks" onclick="switchListTab('marks')">书签 · 划线笔记</span>
+  </div>
+  <div class="list-body" id="list-body"></div>
+</div>
+
+<!-- 选中菜单 -->
+<div class="sel-menu" id="sel-menu"></div>
+<div class="note-editor" id="note-editor">
+  <div class="ne-panel">
+    <div class="ne-head"><span>写笔记</span><button onclick="closeNoteEditor()">×</button></div>
+    <input class="ne-title" id="ne-title" placeholder="标题（可选）">
+    <textarea class="ne-content" id="ne-content" placeholder="记下此刻的想法…"></textarea>
+    <div class="ne-img-prev" id="ne-img-prev"></div>
+    <div class="ne-actions">
+      <button class="ne-img-btn" onclick="document.getElementById('ne-img-file').click()">＋ 配图</button>
+      <input type="file" id="ne-img-file" accept="image/*" style="display:none" onchange="neUploadImg(this)">
+      <button class="ne-save" onclick="saveNoteFromEditor()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 遮罩 -->
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+
+<!-- 仿真卷曲翻页库。本地版(frontend/vendor/page-flip.browser.js)放了就用它——非 defer、在 reader.js 之前加载，
+     这样 St 在 READER_INIT 之前就绪，真·卷曲翻页才生效（之前 defer 会晚于初始化，等于没用）。
+     本地没放则返回空壳(无 St)，自动退回内置 CSS 翻页。CDN 仅作联网时的额外尝试（国内多半连不上）。-->
+<!-- 卷曲翻页库(StPageFlip)已停用：改用本地轻量翻页(showPageSimple)，断网也不空白、不再傻等 CDN。
+     若将来想恢复卷曲翻页：把 page-flip.browser.js 放进 frontend/vendor/ 并取消下面一行注释即可。-->
+<!-- <script src="/static/page-flip.browser.js"></script> -->
+<script src="/static/reader.js"></script>
+<script>READER_INIT();</script>
+</body></html>
