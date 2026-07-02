@@ -21,7 +21,7 @@ def test_settings_page(app_client):
 
 def test_frontend_assets(app_client):
     assert 'treeSVG' in app_client.get('/static/home.js').text
-    assert 'flipPage' in app_client.get('/static/reader.js').text
+    assert 'jumpTo' in app_client.get('/static/reader.js').text
 
 def test_pwa(app_client):
     assert app_client.get('/manifest.webmanifest').status_code == 200
