@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>设置 — MyLibrary</title>
+<style>
+/* 与书房主页同步的莫兰迪主题 */
+:root{--bg:#e8e3da;--text:#4a4640;--text2:#8c8579;--accent:#9d8b7a;--border:#d8d1c5;--panel:#f0ece4;--ink-soft:#8c8579;--card:#f6f2ea;--ok:#5a7d4f;--err:#a86a52}
+body[data-tt="dawn"]{--bg:#e4e3e0;--text:#474a52;--text2:#878a92;--accent:#8b8fa3;--border:#d4d4d6;--panel:#eeedec;--ink-soft:#878a92;--card:#f4f3f1}
+body[data-tt="day"]{--bg:#e8e3da;--text:#4a4640;--text2:#8c8579;--accent:#9d8b7a;--border:#d8d1c5;--panel:#f0ece4;--ink-soft:#8c8579;--card:#f6f2ea}
+body[data-tt="dusk"]{--bg:#e9e0d9;--text:#544944;--text2:#9a877f;--accent:#a98979;--border:#ddd0c8;--panel:#f1e9e2;--ink-soft:#9a877f;--card:#f7f0e9}
+body[data-tt="night"]{--bg:#373d44;--text:#cdd1d6;--text2:#969ba3;--accent:#94a3b3;--border:#4b515a;--panel:#414750;--ink-soft:#969ba3;--card:#3d434b;--ok:#7fa06f;--err:#c98a72}
+*{box-sizing:border-box;margin:0;padding:0}
+#theme-bg{position:fixed;inset:0;z-index:-2;background:var(--bg);background-size:cover;background-position:center}
+#theme-veil{position:fixed;inset:0;z-index:-1;background:var(--bg);opacity:0;transition:opacity .4s;pointer-events:none}
+body.has-bg #theme-veil{opacity:0.85}
+body{font-family:"Noto Serif SC",serif;background:var(--bg);color:var(--text);padding:24px;max-width:680px;margin:0 auto;transition:background .4s,color .4s}
+.setwrap{position:relative;z-index:1}
+h1{font-size:24px;margin-bottom:8px;font-weight:600}
+h1 a{text-decoration:none}
+a{color:var(--accent)}
+.section{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:20px}
+.section h2{font-size:16px;margin-bottom:6px;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:8px}
+.section .desc{font-size:13px;color:var(--ink-soft);line-height:1.7;margin:6px 0 14px}
+label{display:block;font-size:14px;color:var(--text2);margin-bottom:4px;margin-top:14px}
+input[type=text],input[type=password],input[type=number],select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--card);color:var(--text)}
+.row{display:flex;gap:8px;align-items:stretch}
+.row input,.row select{flex:1}
+.status{font-size:13px;margin-top:8px;min-height:18px;line-height:1.6}
+.status.ok{color:var(--ok)}
+.status.err{color:var(--err)}
+.status.busy{color:var(--ink-soft)}
+button{padding:11px 22px;background:var(--accent);color:#fff;border:none;border-radius:9px;cursor:pointer;font-size:15px;font-family:inherit;white-space:nowrap}
+button:hover{opacity:0.92}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--border)}
+button.small{padding:10px 14px;font-size:13px}
+#btn-test.ok{background:var(--ok,#3f9d62);color:#fff;border-color:var(--ok,#3f9d62)}
+#btn-test.bad{border-color:#c0584e;color:#c0584e}
+button:disabled{opacity:0.5;cursor:default}
+.saved{color:var(--ok);font-size:14px;margin-left:12px;display:none}
+.pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--border);color:var(--ink-soft);margin-left:8px;vertical-align:middle}
+.pill.on{color:#fff;background:var(--ok);border-color:var(--ok)}
+.pill.off{color:#fff;background:var(--err);border-color:var(--err)}
+.hintbox{font-size:12.5px;color:var(--ink-soft);background:var(--card);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;margin-top:10px;line-height:1.7}
+.savebar{display:flex;align-items:center;gap:0;margin-top:8px}
+.modelwrap{display:none}
+.modelwrap.show{display:block}
+/* 连接配置档 */
+.prof-label{font-size:13px;color:var(--text2);margin-top:6px;font-weight:600}
+.prof-tip{font-weight:400;color:var(--ink-soft);font-size:12px}
+.profiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.prof-empty{font-size:12.5px;color:var(--ink-soft)}
+.prof-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 10px 7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:13px;color:var(--text);max-width:100%}
+.prof-chip:hover{border-color:var(--accent)}
+.prof-chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.prof-chip .pc-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.prof-chip .pc-model{font-size:11px;opacity:.8;white-space:nowrap}
+.prof-chip .pc-del{border:none;background:none;color:inherit;opacity:.6;cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
+.prof-chip .pc-del:hover{opacity:1}
+</style></head><body>
+<div id="theme-bg"></div><div id="theme-veil"></div>
+<div class="setwrap">
+<h1><a href="/">← 书房</a> / 设置</h1>
+<p class="desc" style="color:var(--ink-soft);margin-bottom:20px">这些设置都存在项目根目录的 <code>config.json</code> 里，换台电脑/给别人用，改这里就行，不用动代码。</p>
+
+<!-- 图书馆 -->
+<div class="section">
+  <h2>图书馆 <span class="pill" id="lib-pill">检查中…</span></h2>
+  <p class="desc">指向你的<b>书库数据</b>目录——就是放书和 <code>library.db</code> 的那个文件夹（例如 <code>F:\MyLibrary</code>）。这不是代码目录。改完点「验证并应用」即时生效，不用重启。</p>
+  <label>书库路径</label>
+  <div class="row">
+    <input type="text" id="lib-root" placeholder="例如 F:\MyLibrary 或 /Users/你/MyLibrary" spellcheck="false">
+    <button class="small" id="lib-apply" onclick="applyLibrary()">验证并应用</button>
+  </div>
+  <div class="status" id="lib-status"></div>
+  <div class="hintbox">Windows 路径里的反斜杠正常填即可（如 <code>F:\MyLibrary</code>）；保存时会自动处理。指对后这里会显示书的数量。</div>
+</div>
+
+<!-- AI 配置 -->
+<div class="section">
+  <h2>AI 配置 <span class="pill" id="ai-pill">未配置</span></h2>
+  <p class="desc">支持任何兼容 OpenAI 格式的服务：DeepSeek、OpenAI、各类中转站 / 反代都行。填好下面几项，点「测试」只是确认能通；点「保存配置」才会让 Quill 用上并记住（下次不用重输）。模型那栏点开会自动列出可选模型。</p>
+  <!-- 连接配置档（参考 SillyTavern）：保存多套接口，一键切换 -->
+  <div class="prof-label">连接配置档<span class="prof-tip">（保存多套接口，点一下切换）</span></div>
+  <div class="profiles" id="profiles-bar"><span class="prof-empty">还没有保存的配置档</span></div>
+  <div class="row" style="margin:8px 0 4px"><button class="small ghost" onclick="saveAsProfile()">＋ 把当前填的存成一个配置档</button></div>
+  <hr style="border:none;border-top:1px dashed var(--border);margin:14px 0">
+  <input type="hidden" id="ai-provider" value="">
+  <label>Base URL（中转站/反代给的接口地址，通常以 /v1 结尾）</label>
+  <input type="text" id="ai-url" placeholder="例如 https://你的反代域名/v1" spellcheck="false" oninput="resetTestBtn()">
+  <label>API Key</label>
+  <input type="password" id="ai-key" placeholder="sk-xxxx（你的密钥）" spellcheck="false" oninput="resetTestBtn()">
+  <label>模型 <span style="color:var(--ink-faint);font-weight:400;font-size:12px">（点开输入框自动拉取可选模型，也可直接手填）</span></label>
+  <input type="text" id="ai-model" list="ai-model-list" placeholder="例如 deepseek-chat / gpt-4o-mini" spellcheck="false" autocomplete="off" oninput="resetTestBtn()" onfocus="if(!document.getElementById('ai-model-list').children.length)fetchModels(true)">
+  <datalist id="ai-model-list"></datalist>
+  <div class="row" style="margin-top:14px">
+    <button class="small" id="btn-test" onclick="testAI()">测试</button>
+  </div>
+  <div class="status" id="ai-status"></div>
+</div>
+
+<!-- 服务端 -->
+<div class="section">
+  <h2>服务端</h2>
+  <p class="desc">端口改动需要重启程序后生效。</p>
+  <label>端口</label>
+  <input type="number" id="srv-port" placeholder="8765">
+</div>
+
+<div class="savebar">
+  <button onclick="saveSettings()">保存配置</button>
+  <span class="saved" id="saved-msg">已保存</span>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function setStatus(el,txt,cls){el.className='status '+(cls||'');el.textContent=txt;}
+
+async function loadSettings() {
+  const r = await (await fetch('/api/settings')).json();
+  $('ai-provider').value = r.ai.provider || '';
+  $('ai-url').value = r.ai.base_url || '';
+  $('ai-key').value = r.ai.api_key || '';          // 已配置时是 ***
+  $('ai-model').value = r.ai.model || '';
+  $('srv-port').value = r.server.port || 8765;
+  const configured = r.ai.api_key_status === 'configured';
+  $('ai-pill').textContent = configured ? '已配置' : '未配置';
+  $('ai-pill').className = 'pill ' + (configured ? 'on' : 'off');
+  await loadStatus();
+}
+async function loadStatus(){
+  try{
+    const s = await (await fetch('/api/status')).json();
+    $('lib-root').value = s.library_root || '';
+    const pill=$('lib-pill');
+    if(s.library_ready){pill.textContent='已就绪';pill.className='pill on';setStatus($('lib-status'),'',' ');}
+    else{pill.textContent='待配置';pill.className='pill off';if(s.library_error)setStatus($('lib-status'),s.library_error,'err');}
+  }catch(e){}
+}
+async function applyLibrary(){
+  const root=$('lib-root').value.trim();
+  if(!root){setStatus($('lib-status'),'请先填路径','err');return;}
+  $('lib-apply').disabled=true;setStatus($('lib-status'),'正在校验并打开…','busy');
+  try{
+    const r=await (await fetch('/api/settings/library',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({root})})).json();
+    if(r.ok){
+      $('lib-pill').textContent='已就绪';$('lib-pill').className='pill on';
+      const n=(r.book_count!=null)?`（${r.book_count.toLocaleString()} 本）`:'';
+      setStatus($('lib-status'),`✓ 已指向：${r.root} ${n}`,'ok');
+    }else{
+      $('lib-pill').textContent='待配置';$('lib-pill').className='pill off';
+      setStatus($('lib-status'),'✗ '+(r.error||'打开失败'),'err');
+    }
+  }catch(e){setStatus($('lib-status'),'✗ 请求出错：'+e,'err');}
+  $('lib-apply').disabled=false;
+}
+async function testAI(){
+  const base_url=$('ai-url').value.trim(), model=$('ai-model').value.trim();
+  let api_key=$('ai-key').value; // *** 表示用已存的
+  const btn=$('btn-test');
+  btn.disabled=true;btn.textContent='测试中…';btn.classList.remove('ok','bad');setStatus($('ai-status'),'','');
+  try{
+    const r=await (await fetch('/api/settings/test-ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base_url,api_key,model})})).json();
+    if(r.ok){
+      await fetchModels(true);              // 顺便把可选模型拉进下拉（只读，不动配置）
+      btn.textContent='✓ 连接成功';btn.classList.add('ok');
+      setStatus($('ai-status'),'✓ 连接成功。要让 Quill 用上并记住（下次不用重输），点下方「保存配置」','ok');
+      const pill=$('ai-pill');if(pill){pill.textContent='待保存';pill.className='pill on';}
+    } else {
+      btn.textContent='测试';btn.classList.add('bad');
+      setStatus($('ai-status'),'✗ '+(r.error||'连接失败')+(r.detail?(' — '+r.detail):''),'err');
+    }
+  }catch(e){btn.textContent='测试';btn.classList.add('bad');setStatus($('ai-status'),'✗ 请求出错：'+e,'err');}
+  btn.disabled=false;
+}
+function resetTestBtn(){const b=$('btn-test');if(b){b.textContent='测试';b.classList.remove('ok','bad');}}
+async function fetchModels(silent){
+  const base_url=$('ai-url').value.trim();let api_key=$('ai-key').value;
+  if(!base_url){if(!silent)setStatus($('ai-status'),'先填 Base URL','err');return;}
+  if(!silent)setStatus($('ai-status'),'正在获取模型列表…','busy');
+  try{
+    const r=await (await fetch('/api/settings/models',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base_url,api_key})})).json();
+    if(r.ok&&r.models&&r.models.length){
+      const dl=$('ai-model-list');
+      dl.innerHTML=r.models.map(m=>`<option value="${(''+m).replace(/"/g,'&quot;')}">`).join('');
+      if(!silent)setStatus($('ai-status'),'✓ 拿到 '+r.count+' 个模型，点输入框从下拉里选','ok');
+    }else{
+      if(!silent)setStatus($('ai-status'),'✗ '+(r.error||'没有可选模型，直接手填模型名即可'),'err');
+    }
+  }catch(e){if(!silent)setStatus($('ai-status'),'✗ 请求出错：'+e,'err');}
+}
+async function saveSettings() {
+  await fetch('/api/settings', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      ai: {
+        provider: $('ai-provider').value,
+        api_key: $('ai-key').value,
+        base_url: $('ai-url').value,
+        model: $('ai-model').value
+      },
+      server: { port: parseInt($('srv-port').value) || 8765 }
+    })
+  });
+  const msg = $('saved-msg'); msg.style.display = 'inline';
+  setTimeout(() => msg.style.display = 'none', 3000);
+  loadSettings();
+}
+// ── 连接配置档（参考 SillyTavern：多套接口一键切换）──
+async function loadProfiles(){
+  let r;try{r=await (await fetch('/api/settings/ai-profiles')).json();}catch(e){return;}
+  const bar=$('profiles-bar');const list=r.profiles||[];
+  if(!list.length){bar.innerHTML='<span class="prof-empty">还没有保存的配置档</span>';return;}
+  bar.innerHTML=list.map(p=>{
+    const nm=p.name.replace(/"/g,'&quot;');
+    return `<span class="prof-chip ${p.active?'on':''}" onclick="activateProfile('${nm}')" title="${nm}">
+      <span class="pc-name">${escapeHtmlS(p.name)}</span><span class="pc-model">${escapeHtmlS(p.model||'')}</span>
+      <button class="pc-del" title="删除" onclick="event.stopPropagation();deleteProfile('${nm}')">×</button></span>`;
+  }).join('');
+}
+function escapeHtmlS(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+async function activateProfile(name){
+  setStatus($('ai-status'),'正在切换配置档…','busy');
+  try{
+    const r=await (await fetch('/api/settings/ai-profiles/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})})).json();
+    if(r.ok){await loadSettings();await loadProfiles();setStatus($('ai-status'),'✓ 已切换到「'+name+'」'+(r.model?(' · '+r.model):''),'ok');}
+    else setStatus($('ai-status'),'✗ '+(r.error||'切换失败'),'err');
+  }catch(e){setStatus($('ai-status'),'✗ 请求出错：'+e,'err');}
+}
+async function saveAsProfile(){
+  const base=$('ai-url').value.trim();
+  if(!base){setStatus($('ai-status'),'先填 Base URL 再存','err');return;}
+  let def=$('ai-provider').value.trim();
+  if(!def){try{def=new URL(base).hostname;}catch(e){def='我的接口';}}
+  const name=prompt('给这个配置档起个名字：',def);
+  if(name===null)return;
+  // 取现有列表，按名字覆盖或新增，再整体保存（key 为 *** 时后端按同名/当前接口保留）
+  let cur=[];try{cur=(await (await fetch('/api/settings/ai-profiles')).json()).profiles||[];}catch(e){}
+  const item={name:name.trim()||def,provider:$('ai-provider').value,base_url:base,api_key:$('ai-key').value,model:$('ai-model').value.trim()};
+  const others=cur.filter(p=>p.name!==item.name).map(p=>({name:p.name,provider:p.provider,base_url:p.base_url,model:p.model,api_key:'***'}));
+  others.push(item);
+  try{
+    const r=await (await fetch('/api/settings/ai-profiles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profiles:others})})).json();
+    if(r.ok){await loadProfiles();setStatus($('ai-status'),'✓ 已存为配置档「'+item.name+'」（点上面的配置档小药丸即可切换使用）','ok');}
+  }catch(e){setStatus($('ai-status'),'✗ 保存失败：'+e,'err');}
+}
+async function deleteProfile(name){
+  let cur=[];try{cur=(await (await fetch('/api/settings/ai-profiles')).json()).profiles||[];}catch(e){}
+  const left=cur.filter(p=>p.name!==name).map(p=>({name:p.name,provider:p.provider,base_url:p.base_url,model:p.model,api_key:'***'}));
+  try{await fetch('/api/settings/ai-profiles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profiles:left})});await loadProfiles();}catch(e){}
+}
+// 与主页同步主题
+function timeThemeByHour(){const h=new Date().getHours();if(h>=5&&h<9)return'dawn';if(h>=9&&h<17)return'day';if(h>=17&&h<20)return'dusk';return'night';}
+(function(){
+  const mode=localStorage.getItem('tt_mode')||'auto';
+  document.body.setAttribute('data-tt',(mode==='auto')?timeThemeByHour():mode);
+  fetch('/api/theme/list').then(r=>r.json()).then(r=>{
+    const bg=$('theme-bg');if(!bg)return;
+    const ver=localStorage.getItem('theme_ver')||'0';
+    if(r.slots&&r.slots.bg){bg.style.backgroundImage=`url(${r.slots.bg}?v=${ver})`;document.body.classList.add('has-bg');}
+    else{bg.style.backgroundImage='';document.body.classList.remove('has-bg');}
+    const blur=parseInt(localStorage.getItem('home_bg_blur'))||0, feather=parseInt(localStorage.getItem('home_bg_feather'))||0;
+    const px=isNaN(parseInt(localStorage.getItem('home_bg_posx')))?50:parseInt(localStorage.getItem('home_bg_posx'));
+    const py=isNaN(parseInt(localStorage.getItem('home_bg_posy')))?50:parseInt(localStorage.getItem('home_bg_posy'));
+    const zoom=(parseInt(localStorage.getItem('home_bg_zoom'))||100)/100;
+    bg.style.backgroundSize='cover';bg.style.backgroundPosition=px+'% '+py+'%';
+    const scale=Math.max(1,zoom)+(blur>0?0.08:0);
+    bg.style.transform=(scale!==1)?`scale(${scale})`:'';bg.style.transformOrigin=px+'% '+py+'%';
+    bg.style.filter=blur>0?`blur(${blur}px)`:'';
+    if(feather>0){const m=`radial-gradient(ellipse 118% 118% at ${px}% ${py}%, #000 ${Math.max(0,100-feather)}%, transparent 100%)`;bg.style.webkitMaskImage=m;bg.style.maskImage=m;}
+    else{bg.style.webkitMaskImage='';bg.style.maskImage='';}
+  }).catch(()=>{});
+})();
+loadSettings();
+loadProfiles();
+</script></div></body></html>

@@ -1,0 +1,153 @@
+MyLibrary build log 
+started 周四 2026/07/02 17:02:43.51 
+USING PYTHON: python 
+Python 3.12.3
+=== pip install (mirror) === 
+Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
+Requirement already satisfied: pip in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (26.1.2)
+Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
+Requirement already satisfied: pyinstaller in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (6.17.0)
+Requirement already satisfied: fastapi>=0.110 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from -r requirements.txt (line 1)) (0.115.0)
+Requirement already satisfied: uvicorn>=0.27 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from -r requirements.txt (line 2)) (0.30.6)
+Requirement already satisfied: python-multipart>=0.0.9 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from -r requirements.txt (line 3)) (0.0.32)
+Requirement already satisfied: altgraph in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from pyinstaller) (0.17.5)
+Requirement already satisfied: packaging>=22.0 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from pyinstaller) (25.0)
+Requirement already satisfied: pefile>=2022.5.30 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from pyinstaller) (2024.8.26)
+Requirement already satisfied: pyinstaller-hooks-contrib>=2025.9 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from pyinstaller) (2025.10)
+Requirement already satisfied: pywin32-ctypes>=0.2.1 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from pyinstaller) (0.2.3)
+Requirement already satisfied: setuptools>=42.0.0 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from pyinstaller) (70.2.0)
+Requirement already satisfied: starlette<0.39.0,>=0.37.2 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from fastapi>=0.110->-r requirements.txt (line 1)) (0.38.6)
+Requirement already satisfied: pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from fastapi>=0.110->-r requirements.txt (line 1)) (2.9.2)
+Requirement already satisfied: typing-extensions>=4.8.0 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from fastapi>=0.110->-r requirements.txt (line 1)) (4.15.0)
+Requirement already satisfied: annotated-types>=0.6.0 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4->fastapi>=0.110->-r requirements.txt (line 1)) (0.7.0)
+Requirement already satisfied: pydantic-core==2.23.4 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4->fastapi>=0.110->-r requirements.txt (line 1)) (2.23.4)
+Requirement already satisfied: anyio<5,>=3.4.0 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from starlette<0.39.0,>=0.37.2->fastapi>=0.110->-r requirements.txt (line 1)) (4.11.0)
+Requirement already satisfied: idna>=2.8 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from anyio<5,>=3.4.0->starlette<0.39.0,>=0.37.2->fastapi>=0.110->-r requirements.txt (line 1)) (3.11)
+Requirement already satisfied: sniffio>=1.1 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from anyio<5,>=3.4.0->starlette<0.39.0,>=0.37.2->fastapi>=0.110->-r requirements.txt (line 1)) (1.3.1)
+Requirement already satisfied: click>=7.0 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from uvicorn>=0.27->-r requirements.txt (line 2)) (8.3.1)
+Requirement already satisfied: h11>=0.8 in C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages (from uvicorn>=0.27->-r requirements.txt (line 2)) (0.16.0)
+Requirement already satisfied: colorama in C:\Users\ASUS\AppData\Roaming\Python\Python312\site-packages (from click>=7.0->uvicorn>=0.27->-r requirements.txt (line 2)) (0.4.6)
+=== pyinstaller === 
+845 INFO: PyInstaller: 6.17.0, contrib hooks: 2025.10
+846 INFO: Python: 3.12.3
+886 INFO: Platform: Windows-11-10.0.22000-SP0
+886 INFO: Python environment: C:\Users\ASUS\AppData\Local\Programs\Python\Python312
+891 INFO: Removing temporary files and cleaning cache in C:\Users\ASUS\AppData\Local\pyinstaller
+3970 INFO: Module search paths (PYTHONPATH):
+['D:\\MyLibrary_v3\\mylib\\server\\routes',
+ 'D:\\MyLibrary_v3\\mylib\\utils',
+ 'D:\\MyLibrary_v3\\mylib\\tools',
+ 'D:\\MyLibrary_v3\\mylib\\agents',
+ 'D:\\MyLibrary_v3\\mylib\\server',
+ 'D:\\MyLibrary_v3\\mylib\\core',
+ 'D:\\MyLibrary_v3',
+ 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\python312.zip',
+ 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\DLLs',
+ 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib',
+ 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312',
+ 'C:\\Users\\ASUS\\AppData\\Roaming\\Python\\Python312\\site-packages',
+ 'C:\\Users\\ASUS\\AppData\\Roaming\\Python\\Python312\\site-packages\\win32',
+ 'C:\\Users\\ASUS\\AppData\\Roaming\\Python\\Python312\\site-packages\\win32\\lib',
+ 'C:\\Users\\ASUS\\AppData\\Roaming\\Python\\Python312\\site-packages\\Pythonwin',
+ 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages',
+ 'D:\\MyLibrary_v3\\scripts',
+ 'D:\\MyLibrary_v3',
+ 'D:\\MyLibrary_v3\\mylib\\core',
+ 'D:\\MyLibrary_v3\\mylib\\server',
+ 'D:\\MyLibrary_v3\\mylib\\agents',
+ 'D:\\MyLibrary_v3\\mylib\\tools',
+ 'D:\\MyLibrary_v3\\mylib\\utils',
+ 'D:\\MyLibrary_v3\\mylib\\server\\routes']
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.3)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+6918 INFO: Appending 'datas' from .spec
+6923 INFO: checking Analysis
+6924 INFO: Building Analysis because Analysis-00.toc is non existent
+6924 INFO: Looking for Python shared library...
+6924 INFO: Using Python shared library: C:\Users\ASUS\AppData\Local\Programs\Python\Python312\python312.dll
+6924 INFO: Running Analysis Analysis-00.toc
+6924 INFO: Target bytecode optimization level: 0
+6924 INFO: Initializing module dependency graph...
+6928 INFO: Initializing module graph hook caches...
+7122 INFO: Analyzing modules for base_library.zip ...
+10047 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+12197 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+14190 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+14880 INFO: Caching module dependency graph...
+14951 INFO: Analyzing D:\MyLibrary_v3\scripts\launcher.py
+15043 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+15047 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+15655 INFO: Processing standard module hook 'hook-_tkinter.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+16097 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+16392 INFO: Processing standard module hook 'hook-xml.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+16712 INFO: Processing standard module hook 'hook-_ctypes.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+17298 INFO: Processing standard module hook 'hook-pydantic.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages\pydantic\experimental\__init__.py:7: PydanticExperimentalWarning: This module is experimental, its contents are subject to change and deprecation.
+  warnings.warn(
+18018 INFO: Processing standard module hook 'hook-platform.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+18055 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+18062 INFO: SetuptoolsInfo: initializing cached setuptools info...
+20151 INFO: Processing standard module hook 'hook-zoneinfo.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+20185 INFO: Processing standard module hook 'hook-sysconfig.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+20701 INFO: Processing standard module hook 'hook-pygments.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+24490 INFO: Processing standard module hook 'hook-anyio.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+26561 INFO: Processing standard module hook 'hook-uvicorn.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+27831 INFO: Processing standard module hook 'hook-difflib.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+28447 INFO: Processing standard module hook 'hook-sqlite3.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+29677 INFO: Processing standard module hook 'hook-certifi.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+30400 INFO: Analyzing hidden import 'uvicorn.__main__'
+30402 INFO: Analyzing hidden import 'uvicorn.lifespan'
+30403 INFO: Analyzing hidden import 'uvicorn.lifespan.off'
+30405 INFO: Analyzing hidden import 'uvicorn.lifespan.on'
+30413 INFO: Analyzing hidden import 'uvicorn.loops'
+30414 INFO: Analyzing hidden import 'uvicorn.loops.asyncio'
+30416 INFO: Analyzing hidden import 'uvicorn.loops.auto'
+30422 INFO: Analyzing hidden import 'uvicorn.protocols.http.auto'
+30424 INFO: Analyzing hidden import 'uvicorn.protocols.websockets.auto'
+30426 INFO: Analyzing hidden import 'uvicorn.workers'
+30510 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+30542 INFO: Processing standard module hook 'hook-importlib_metadata.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+30583 INFO: Processing pre-safe-import-module hook 'hook-zipp.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+31014 INFO: Analyzing hidden import 'email.mime.text'
+31024 INFO: Analyzing hidden import 'email.mime.multipart'
+31026 INFO: Processing module hooks (post-graph stage)...
+31319 INFO: Processing pre-safe-import-module hook 'hook-tomli.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+36084 INFO: Processing standard module hook 'hook-_tkinter.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks'
+36086 INFO: Processing standard module hook 'hook-tzdata.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+37195 INFO: Performing binary vs. data reclassification (1569 entries)
+37774 INFO: Looking for ctypes DLLs
+37819 INFO: Analyzing run-time hooks ...
+37824 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+37829 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+37835 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+37839 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+37885 INFO: Creating base_library.zip...
+37908 INFO: Looking for dynamic libraries
+C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages\pydantic\experimental\__init__.py:7: PydanticExperimentalWarning: This module is experimental, its contents are subject to change and deprecation.
+  warnings.warn(
+43984 INFO: Extra DLL search directories (AddDllDirectory): []
+43984 INFO: Extra DLL search directories (PATH): []
+44985 INFO: Warnings written to D:\MyLibrary_v3\build\MyLibrary\warn-MyLibrary.txt
+45080 INFO: Graph cross-reference written to D:\MyLibrary_v3\build\MyLibrary\xref-MyLibrary.html
+45159 INFO: checking PYZ
+45159 INFO: Building PYZ because PYZ-00.toc is non existent
+45159 INFO: Building PYZ (ZlibArchive) D:\MyLibrary_v3\build\MyLibrary\PYZ-00.pyz
+45897 INFO: Building PYZ (ZlibArchive) D:\MyLibrary_v3\build\MyLibrary\PYZ-00.pyz completed successfully.
+45955 INFO: checking PKG
+45955 INFO: Building PKG because PKG-00.toc is non existent
+45955 INFO: Building PKG (CArchive) MyLibrary.pkg
+53382 INFO: Building PKG (CArchive) MyLibrary.pkg completed successfully.
+53409 INFO: Bootloader C:\Users\ASUS\AppData\Local\Programs\Python\Python312\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+53409 INFO: checking EXE
+53409 INFO: Building EXE because EXE-00.toc is non existent
+53409 INFO: Building EXE from EXE-00.toc
+53410 INFO: Copying bootloader EXE to D:\MyLibrary_v3\dist\MyLibrary.exe
+53795 INFO: Copying icon to EXE
+53982 INFO: Copying 0 resources to EXE
+53982 INFO: Embedding manifest in EXE
+54185 INFO: Appending PKG archive to EXE
+54256 INFO: Fixing EXE headers
+57288 INFO: Building EXE from EXE-00.toc completed successfully.
+57315 INFO: Build complete! The results are available in: D:\MyLibrary_v3\dist
+pyinstaller exit code: 0 
+BUILD OK exe exists 

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mylibrary"
+version = "3.0.0"
+description = "个人藏书阅读系统 — 本地优先、跨设备的电子书库与阅读器"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+icons = ["cairosvg>=2.7"]   # 可选：生成 PNG 应用图标（无则回退 SVG）
+
+[tool.setuptools]
+packages = ["mylib", "mylib.core", "mylib.server", "mylib.server.routes",
+            "mylib.agents", "mylib.tools", "mylib.utils"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
