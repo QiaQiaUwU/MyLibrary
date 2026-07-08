@@ -335,5 +335,3 @@ fetch('/api/theme/list').then(r=>r.json()).then(d=>{
 // 页脚版本号（/api/serverinfo 里带回来的 APP_VERSION）
 fetch('/api/serverinfo').then(r=>r.json()).then(d=>{if(d&&d.version){const v=document.createElement('div');v.style.cssText='text-align:center;font-size:11px;color:var(--ink-faint,#9a938a);padding:18px 0 10px;font-family:var(--sans,sans-serif)';v.textContent='MyLibrary v'+d.version;document.body.appendChild(v);}}).catch(()=>{});
 </script></div></body></html>
-
-

@@ -200,5 +200,3 @@ async def settings_page():
 @app.get('/admin', response_class=HTMLResponse)
 async def admin_page():
     return _with_hb(live_admin_html())
-
-

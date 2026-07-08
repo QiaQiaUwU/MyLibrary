@@ -617,5 +617,3 @@ function renderTimelineList(timeline,grain){
     return `<div class="jn-period"><div class="jn-period-head"><span class="jnp-label">${g.label}</span><span class="jnp-stat">${hrs>0?hrs+'时':''}${mins}分 · ${Object.keys(g.books).length}本${g.markCount?' · '+g.markCount+'标记':''}</span></div><div class="jn-period-books">${bookList||'<span class="jd-empty">这段时间没有阅读记录</span>'}</div></div>`;
   }).join('');
 }
-
-

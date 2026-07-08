@@ -29,5 +29,3 @@ def test_extract_author():
     from mylib_core import extract_author_from_name
     # 不报错即可（具体规则随实现）
     assert extract_author_from_name('某书 作者：张三') is not None or True
-
-

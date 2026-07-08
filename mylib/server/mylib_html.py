@@ -740,5 +740,3 @@ loadData();
 </body>
 </html>
 '''
-
-

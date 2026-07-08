@@ -114,5 +114,3 @@ async def api_ambient(sound: str):
     return {'sound': sound, 'method': 'web_audio_synthesis'}
 
 # ── 快速筛选带走 ────────────────────────────────────────────────────────────
-
-

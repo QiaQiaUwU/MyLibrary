@@ -152,5 +152,3 @@ def test_confused_scans_quill_reply_not_user_confusion():
     body = m.group(0)
     assert "QM_PUZZLE_KW.test(replyMsg)" in body, '疑惑应该测 replyMsg（Quill 自己的话），不是 userMsg'
     assert "QM_PUZZLE_KW.test(userMsg)" not in body, '不该再测 userMsg 里有没有困惑关键词——那是上一轮的逻辑错误'
-
-

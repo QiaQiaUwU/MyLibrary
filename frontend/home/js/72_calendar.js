@@ -159,5 +159,3 @@ function _qModalSync(){
   }
   _qModalSync();
 })();
-
-

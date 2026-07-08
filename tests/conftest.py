@@ -56,5 +56,3 @@ def app_client():
     _state._HTML_CACHE = HTML
     from fastapi.testclient import TestClient
     return TestClient(s.app)
-
-

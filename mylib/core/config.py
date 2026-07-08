@@ -50,5 +50,3 @@ def static_dir() -> Path:
     # 回退：项目根/static
     cand = Path(__file__).parent.parent.parent / 'static'
     return cand if cand.exists() else Path(__file__).parent
-
-

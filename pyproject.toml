@@ -24,5 +24,3 @@ packages = ["mylib", "mylib.core", "mylib.server", "mylib.server.routes",
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-

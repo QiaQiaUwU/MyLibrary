@@ -25,5 +25,3 @@ echo ============================================
 echo   Done. Refresh the GitHub page to check.
 echo ============================================
 pause
-
-

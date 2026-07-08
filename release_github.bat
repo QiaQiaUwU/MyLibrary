@@ -30,5 +30,3 @@ goto :eof
 :noversion
 echo No version number entered, exiting.
 pause
-
-

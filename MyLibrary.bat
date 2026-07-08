@@ -8,5 +8,3 @@ if errorlevel 1 (
   echo Start failed. First time? Run:  pip install -r requirements.txt
   pause
 )
-
-

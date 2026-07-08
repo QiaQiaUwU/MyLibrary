@@ -411,5 +411,3 @@ async function loadJourney(tab){
 // 切回前台立刻补一次，配合后端 90s 宽限，手机锁屏/切后台不会被误杀。
 (function(){try{var hb=function(){fetch("/api/heartbeat").catch(function(){});};hb();setInterval(hb,20000);document.addEventListener("visibilitychange",function(){if(!document.hidden)hb();});}catch(e){}})();
 
-
-

@@ -66,5 +66,3 @@ def test_zodiac_injected_only_with_valid_birth_data():
     except Exception:
         raised = True
     assert raised, '这条本来就该是非法 json，确认测试数据本身没问题'
-
-

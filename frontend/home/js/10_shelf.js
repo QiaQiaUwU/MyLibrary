@@ -1351,5 +1351,3 @@ async function openQR(){
 }
 function closeQR(){document.getElementById('qr-bg').classList.remove('show');}
 
-
-

@@ -511,5 +511,3 @@ async def api_quill_season():
     except Exception:
         pass
     return out
-
-
