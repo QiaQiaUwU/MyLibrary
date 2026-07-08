@@ -1,42 +1,43 @@
-# 个人/机密：绝不上传
-config.json
-安装与迁移指南.md
-*_log.txt
-*.db
-*.db-wal
-*.db-shm
-*.db.bak*
-*.bak_*
-_task_state.json
-*.mrpro
+__pycache__/
+*.pyc
+library.db
+/_ambient/
+/_quill_stickers/
+_sfx/*.mp3
+*.zip
+.DS_Store
 *.log
+
+# v4.6.19 补充：跑起来之后本地会生成这几个东西，都是运行产物不是源码，
+# 用户实际机器上出现过 build_log.txt/mylib_log.txt/.deps_ok 被 git 追踪的情况——
+# *.log 这条挡不住 .txt 结尾的日志文件，这次单独补上。
+build_log.txt
+mylib_log.txt
 startup_error.log
 .deps_ok
 
-# 库内容（书、隔离区、回收站等，都在母库目录，通常不在项目里；以防万一）
-books/
-_recycle/
-_restored/
-_quarantine/
+# v4.6.10 补充：config.json 里是你的真实 AI API Key 和本机库路径，
+# 之前这份 .gitignore 没排除它——一旦 git add . 提交上去，密钥就进仓库历史了，
+# 就算之后删掉、改成私有仓库，只要推送过就已经泄露过一次，得从头轮换密钥。
+config.json
+*.local.json
 
-# Python
-__pycache__/
-.pytest_cache/
-*.pyc
-*.pyo
+# 打包产物（PyInstaller 构建出来的，不是源码，MyLibrary.spec 本身要提交）
+dist/
+build/
+*.exe
+
+# Python 虚拟环境
 .venv/
 venv/
 env/
+*.egg-info/
 
-# 前端/工具
-node_modules/
-/static/_theme/
-.DS_Store
+# 编辑器/系统垃圾
+.vscode/
+.idea/
+*.swp
 Thumbs.db
 
-
-# PyInstaller 打包产物
-/build/
-/dist/
-*.exe
-*.spec.bak
+# 万一以后引入前端构建工具
+node_modules/

@@ -34,19 +34,49 @@ body{padding-bottom:90px;position:relative}
 #theme-bg{position:fixed;inset:0;z-index:-2;background:var(--paper);background-size:cover;background-position:center;transition:opacity .4s}
 #theme-bg.tiled{background-size:340px;background-repeat:repeat}
 /* 背景上覆一层半透明纸色，保证文字可读 */
+#theme-tex{position:fixed;inset:0;z-index:-1;pointer-events:none;background-repeat:repeat;mix-blend-mode:multiply;opacity:0;transition:opacity .3s}
+#theme-vign{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .3s}
+#theme-mist{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .3s}
+#theme-shapes{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
+#theme-shapes>div,.se-shape{position:absolute;transform:translate(-50%,-50%)}
+#theme-modal,.grove-editor,#quill-panel{user-select:none}
+#theme-modal input,#theme-modal textarea,.grove-editor input,#quill-panel input,#quill-panel textarea{user-select:text}
+.q-lk{color:#3a6ea5;text-decoration:underline dotted;cursor:pointer}
+.qm table.q-tbl{border-collapse:separate;border-spacing:0;margin:6px 0;font-size:12px;background:var(--paper);border:1px solid var(--line-solid);border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.qm .q-tbl th,.qm .q-tbl td{padding:4px 9px;text-align:left;border-bottom:1px solid var(--line-solid)}
+.qm .q-tbl th{background:var(--accent-soft);color:var(--accent);font-weight:700;border-bottom:1px solid var(--line-solid)}
+.qm .q-tbl tr:last-child td{border-bottom:none}
+.qm .q-tbl tr:nth-child(even) td{background:rgba(0,0,0,.025)}
+.qm .q-tbl .q-up{color:#b98a3e;font-weight:600}
+.qm .q-tbl .q-rev{color:#9a5a4a;font-weight:600}
+.qm details.q-fold{margin:6px 0;border:1px dashed var(--line-solid);border-radius:8px;padding:4px 8px}
+.qm details.q-fold summary{cursor:pointer;color:var(--accent);font-size:12px}
+.qm img.q-stk{max-width:110px;max-height:110px;display:block;margin:4px 0;border-radius:8px}
+.qm img.q-img{max-width:100%;border-radius:8px;display:block;margin:6px 0}
+#q-img-chip img{width:34px;height:34px;object-fit:cover;border-radius:8px;vertical-align:middle}
+#q-img-chip span{cursor:pointer;color:#b3563f;margin:0 4px}
+.q-stkrow{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
+.q-stkrow .it{position:relative}
+.q-stkrow img{width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid var(--line-solid)}
+.q-stkrow .x{position:absolute;top:-6px;right:-6px;width:16px;height:16px;line-height:14px;text-align:center;background:var(--paper);border:1px solid var(--line-solid);border-radius:50%;font-size:10px;color:#b3563f;cursor:pointer}
+.gstop{position:relative;display:inline-flex}
+.gstop .cb-sw{width:24px;height:24px}
+.gstop.on .cb-sw{outline:2.5px solid var(--accent);outline-offset:1px}
+.gstop .sw-x{position:absolute;top:-7px;right:-6px;width:15px;height:15px;line-height:13px;text-align:center;border-radius:50%;background:var(--paper);border:1px solid var(--line-solid);color:#b3563f;font-size:10px;cursor:pointer}
 #theme-veil{position:fixed;inset:0;z-index:-1;background:var(--paper);opacity:0;transition:opacity .4s;pointer-events:none}
-body.has-bg #theme-veil{opacity:0.82}
+
+body.has-bg{background:transparent}
 body.has-bg .masthead,body.has-bg .toolbar,body.has-bg .stage{position:relative;z-index:1}
 /* 顶部插画条 */
-#theme-strip{max-width:1440px;margin:0 auto;height:0;overflow:hidden;transition:height .4s;border-radius:0 0 14px 14px}
+#theme-strip{width:100%;max-width:none;margin:0;height:0;overflow:hidden;transition:height .4s;border-radius:0}
+#theme-strip-bottom{position:fixed;left:0;right:0;bottom:0;z-index:0;pointer-events:none;width:100%;max-width:none;margin:0;height:0;overflow:hidden;transition:height .4s;border-radius:0}
 #theme-strip.show{height:120px}
-#theme-strip img{width:100%;height:120px;object-fit:cover;display:block}
+#theme-strip-bottom.show{height:120px}
+#theme-strip img,#theme-strip-bottom img{width:100%;height:120px;object-fit:cover;display:block}
 /* 边角装饰 */
-.theme-corner{position:fixed;z-index:0;pointer-events:none;opacity:.9;max-width:200px;max-height:200px}
-.theme-corner.tl{top:0;left:0}
-.theme-corner.tr{top:0;right:0;transform:scaleX(-1)}
-.theme-corner.bl{bottom:0;left:0;transform:scaleY(-1)}
-.theme-corner.br{bottom:0;right:0;transform:scale(-1,-1)}
+#side-l,#side-r{position:fixed;top:0;bottom:0;width:170px;z-index:0;pointer-events:none;background-size:cover;background-position:center;opacity:.95}
+#side-l{left:0;-webkit-mask-image:linear-gradient(to right,#000 55%,transparent);mask-image:linear-gradient(to right,#000 55%,transparent)}
+#side-r{right:0;-webkit-mask-image:linear-gradient(to left,#000 55%,transparent);mask-image:linear-gradient(to left,#000 55%,transparent)}
 .masthead{padding:28px 40px 0;display:flex;align-items:flex-end;justify-content:space-between;max-width:1440px;margin:0 auto}
 /* 书房/书架 主界面切换 */
 .rooms{display:flex;gap:6px}
@@ -333,6 +363,121 @@ body.edit .hint{display:none}
 .tu-prev{aspect-ratio:1;border:2px dashed var(--line-solid);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background-size:cover;background-position:center;color:var(--ink-faint);font-family:var(--sans);font-size:12px}
 .tu-prev.wide{aspect-ratio:2.5}
 .tu-prev:hover{border-color:var(--accent);color:var(--accent)}
+.tu-prev.drag-over{border-color:var(--accent);border-style:solid;background-color:var(--accent-soft);color:var(--accent)}
+.tu-prev.filled{border-style:solid;border-color:var(--accent);cursor:grab}
+.tu-sub{display:block;font-size:10px;color:var(--ink-faint);font-weight:400;margin-top:1px;line-height:1.4}
+.tu-hint{font-size:11px;color:var(--ink-faint);margin:-4px 0 10px;line-height:1.5}
+/* 纯色背景：调色盘 + 质感 */
+.color-bg-box{border:1px solid var(--line-solid);border-radius:12px;padding:12px;margin-bottom:20px}
+.cb-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.cb-row:last-child{margin-bottom:0}
+#cb-color{width:52px;height:34px;border:1px solid var(--line-solid);border-radius:8px;background:none;padding:2px;cursor:pointer;flex:0 0 auto}
+.cb-btn{padding:6px 12px;border:1px solid var(--line-solid);border-radius:8px;background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:var(--sans)}
+.cb-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cb-lbl{font-size:12px;color:var(--ink-soft);font-family:var(--sans);flex:0 0 auto}
+.cb-swatches{display:flex;flex-wrap:wrap;gap:8px}
+.cb-swatches:empty{display:none}
+.cb-sw{position:relative;width:30px;height:30px;border-radius:8px;border:2px solid var(--line-solid);cursor:pointer;flex:0 0 auto}
+.cb-sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.cb-sw .sw-x{position:absolute;top:-7px;right:-7px;width:16px;height:16px;line-height:14px;text-align:center;border-radius:50%;background:var(--paper);border:1px solid var(--line-solid);color:var(--ink-soft);font-size:11px;cursor:pointer;display:none}
+.cb-sw:hover .sw-x{display:block}
+.cb-texes{display:flex;gap:6px;flex-wrap:wrap}
+.cb-tex{padding:5px 10px;border:1px solid var(--line-solid);border-radius:14px;background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:var(--sans)}
+.cb-tex.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+/* 各页迷你地图：一页一张，槽位按真实位置摆 */
+.tp-link{font-size:12px;font-weight:400;color:var(--accent);cursor:pointer;margin-left:8px}
+.page-maps{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:20px}
+.pmap-title{font-size:13px;color:var(--ink-soft);font-family:var(--sans);margin-bottom:6px}
+.pmap-frame{position:relative;height:172px;border:1px solid var(--line-solid);border-radius:12px;background:var(--paper);overflow:hidden}
+.pmap-frame .tu-prev{position:absolute;margin:0;border-radius:7px;font-size:12px;background-size:cover;background-position:center;aspect-ratio:auto;min-height:0;padding:0}
+.pmap-frame .tu-prev span{pointer-events:none;padding:0 4px;white-space:nowrap}
+.pmap-frame .pm-strip{top:8px;left:8px;right:8px;height:32px}
+.pmap-frame .pm-side{top:48px;left:8px;bottom:8px;width:34px;writing-mode:vertical-rl;letter-spacing:2px}
+.pmap-frame .pm-sider{left:auto;right:8px}
+.pmap-frame .pm-main{top:48px;left:50px;right:50px;bottom:8px}
+.pmap-frame .pm-mid{bottom:48px}
+.pmap-frame .pm-bstrip{left:50px;right:50px;bottom:8px;height:32px}
+.pmap-frame .pm-full{left:8px;right:8px}
+.pmap-frame .pm-only{top:8px}
+.pmap-frame .pm-deskl{top:8px;left:8px;bottom:8px;width:46px;writing-mode:vertical-rl;letter-spacing:2px}
+.pmap-frame .pm-deskr{top:8px;right:8px;bottom:8px;width:46px;writing-mode:vertical-rl;letter-spacing:2px}
+.pmap-frame .pm-dead{position:absolute;top:8px;left:62px;right:62px;bottom:8px;border:2px dashed var(--line-solid);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-faint);opacity:.5}
+.cpal{position:relative}
+.cpal.editing{animation:jiggle .35s infinite alternate}
+.cpal .sw-x{position:absolute;top:-7px;right:-4px;width:17px;height:17px;line-height:15px;text-align:center;border-radius:50%;background:var(--paper);border:1px solid var(--line-solid);color:#b3563f;font-size:12px;cursor:pointer;display:none;z-index:2}
+.cpal.editing .sw-x{display:block}
+/* 背景方案 */
+.scheme-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+.scheme{width:58px;cursor:pointer;text-align:center;position:relative}
+.scheme-sw{height:40px;border-radius:9px;border:2px solid var(--line-solid);background-size:cover;background-position:center}
+.scheme.on .scheme-sw{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.scheme-name{font-size:11px;color:var(--ink-soft);font-family:var(--sans);margin-top:3px;white-space:nowrap;overflow:hidden}
+.scheme .sw-x{position:absolute;top:-7px;right:-4px;width:17px;height:17px;line-height:15px;text-align:center;border-radius:50%;background:var(--paper);border:1px solid var(--line-solid);color:#b3563f;font-size:12px;cursor:pointer;display:none;z-index:2}
+.scheme-grid.editing .scheme .sw-x{display:block}
+.scheme-grid.editing .scheme-sw{animation:jiggle .35s infinite alternate}
+@keyframes jiggle{from{transform:rotate(-1.6deg)}to{transform:rotate(1.6deg)}}
+.ge-nav{background:none;border:1px solid var(--line-solid);border-radius:7px;width:24px;height:24px;line-height:1;cursor:pointer;color:var(--ink-soft);font-size:14px}
+.grove-editor.ge-wide{width:min(460px,94vw)}
+.grove-editor.ge-big{left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:min(760px,95vw);max-height:92vh;overflow:auto}
+.ge-preview.sm{height:300px;touch-action:none}
+.se-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 8px}
+.se-ico{width:36px;height:36px;border:1px solid var(--line-solid);border-radius:9px;background:var(--paper);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.se-ico svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.se-ico:hover{border-color:var(--accent);color:var(--accent)}
+.se-ico.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.se-tool{min-height:38px;display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.se-tool input[type=range]{flex:1;accent-color:var(--accent)}
+.se-tool .ge-lbl{flex:0 0 auto}
+#se-crop{position:absolute;border:1.5px dashed #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.28);cursor:move;z-index:4}
+#se-crop .ch{position:absolute;width:14px;height:14px;background:#fff;border:1.5px solid rgba(0,0,0,.4);border-radius:3px}
+#se-crop .ch.tl{left:-7px;top:-7px;cursor:nwse-resize}#se-crop .ch.tr{right:-7px;top:-7px;cursor:nesw-resize}
+#se-crop .ch.bl{left:-7px;bottom:-7px;cursor:nesw-resize}#se-crop .ch.br{right:-7px;bottom:-7px;cursor:nwse-resize}
+.se-mode{display:flex;gap:6px}
+.se-wrap{display:flex;gap:14px;align-items:flex-start}
+.se-left{flex:1;min-width:0}
+.se-right{width:238px;flex:0 0 238px;border:1px solid var(--line-solid);border-radius:12px;padding:10px;max-height:56vh;overflow:auto;background:var(--paper)}
+.se-gtabs{display:flex;gap:6px;margin-bottom:10px}
+.se-gtab{flex:1;padding:6px 0;border:1px solid var(--line-solid);border-radius:8px;background:transparent;color:var(--ink-soft);font-size:12px;font-family:var(--sans);cursor:pointer;text-align:center}
+.se-gtab.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.se-prow{margin-bottom:11px}
+.se-prow .pl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);font-family:var(--sans);margin-bottom:3px}
+.se-prow .pl b{font-weight:600;color:var(--ink)}
+.se-prow input[type=range]{width:100%;accent-color:var(--accent)}
+.se-prow .prowline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.se-sep{width:1px;height:24px;background:var(--line-solid);margin:0 3px;align-self:center}
+#se-crop .rh{position:absolute;left:50%;top:-26px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#fff;border:1.5px solid rgba(0,0,0,.4);cursor:ew-resize}
+#se-crop .rh::after{content:"";position:absolute;left:7px;top:14px;width:2px;height:12px;background:#fff}
+.grove-editor.ge-big{width:min(920px,96vw)}
+.ge-preview.sm{height:340px;max-height:52vh;background:#26221c}
+#se-frame{position:absolute;border:1.5px solid rgba(255,255,255,.9);box-shadow:0 0 0 9999px rgba(20,17,12,.45);pointer-events:none;z-index:3;border-radius:2px}
+#se-frame .rh{position:absolute;left:50%;top:-26px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#fff;border:1.5px solid rgba(0,0,0,.4);cursor:ew-resize;pointer-events:auto}
+#se-frame .rh::after{content:"";position:absolute;left:7px;top:14px;width:2px;height:12px;background:#fff}
+#se-img{position:absolute;user-select:none;-webkit-user-drag:none;will-change:transform}
+.se-cvl{position:absolute;z-index:1}
+.gspot{position:absolute;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.35);transform:translate(-50%,-50%);cursor:grab;z-index:3}
+.gspot.on{box-shadow:0 0 0 2.5px var(--accent)}
+.ge-preview.sm{height:120px;cursor:grab}
+.ge-preview.sm:active{cursor:grabbing}
+.ge-preview{position:relative;height:190px;border-radius:12px;overflow:hidden;margin-bottom:10px;background:linear-gradient(to bottom,transparent,var(--accent-soft));border:1px solid var(--line-solid)}
+.gp-bg{position:absolute;inset:0;background-size:cover;background-position:center;pointer-events:none;transition:filter .2s,background-color .2s}
+.gp-tex{position:absolute;inset:0;background-repeat:repeat;mix-blend-mode:multiply;opacity:0;pointer-events:none}
+.gp-tree{position:absolute;transform:translate(-50%,-92%);cursor:grab;text-align:center;touch-action:none;user-select:none;z-index:1}
+.gp-tree:active{cursor:grabbing;z-index:2}
+.gp-tree .gp-art svg{width:42px;height:52px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.15))}
+.gp-name{font-size:10px;color:var(--ink-soft);font-family:var(--sans);max-width:56px;overflow:hidden;white-space:nowrap;background:var(--paper);border-radius:6px;padding:0 3px;opacity:.9}
+.gp-tree.hist{opacity:.88}
+.gp-tree.hist .gp-name::after{content:' ·往期';color:var(--ink-faint)}
+.g-tree.hist{opacity:.88}
+.garden-grove.freeform{display:block;height:210px}
+.garden-grove.freeform .g-tree{position:absolute;transform:translate(-50%,-95%);margin:0}
+.pe-sw{position:relative;z-index:1;display:inline-flex;padding-top:8px}
+.pe-sw input[type=color]{width:40px;height:32px;border:1px solid var(--line-solid);border-radius:7px;background:none;padding:2px;cursor:pointer;position:relative;z-index:1}
+.pe-sw .sw-x{position:absolute;top:0;right:-5px;width:16px;height:16px;line-height:14px;text-align:center;border-radius:50%;background:var(--paper);border:1px solid var(--line-solid);color:#b3563f;font-size:11px;cursor:pointer;z-index:2}
+.cpal{width:80px}
+.cpal-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ge-nav:hover{border-color:var(--accent);color:var(--accent)}
+/* 通用编辑卡片（槽位与草地共用样式） */
+
 .veil-row{display:flex;align-items:center;gap:10px;margin-bottom:18px}
 .veil-row input[type=range]{accent-color:var(--accent)}
 /* 编辑模式：批量删除按钮（红） + 拖动归类目标行 */
@@ -369,6 +514,7 @@ body.edit .tag-drop-row{display:flex}
 .feat-row:last-child{border-bottom:none}
 /* 阅读历程 */
 .journey-page{position:fixed;inset:0;background:var(--paper);z-index:120;display:none;flex-direction:column;overflow:hidden}
+.journey-page>*:not(#journey-bg):not(#journey-banner){position:relative;z-index:1}
 /* 独立小窗只显示历程：藏掉书架那一套，历程页常驻 */
 html.journey-only{overflow:hidden}
 html.journey-only .masthead,html.journey-only .stage,html.journey-only .bgtask-bar{display:none!important}
@@ -626,6 +772,29 @@ html.journey-only .journey-page{display:flex!important}
 .garden-month::before{content:'';flex:0 0 3px;width:3px;height:14px;background:var(--green);border-radius:2px;opacity:.7}
 .garden-month-n{font-weight:400;color:var(--ink-faint);font-size:12px}
 .garden-grove{display:flex;flex-wrap:wrap;gap:6px 4px;padding:14px;background:linear-gradient(to bottom,transparent,var(--accent-soft));border-radius:14px;margin-bottom:6px}
+.garden-grove{position:relative;overflow:hidden}
+.grove-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;border-radius:inherit;pointer-events:none;transition:filter .2s,background-color .2s}
+.grove-tex{position:absolute;inset:0;z-index:0;background-repeat:repeat;mix-blend-mode:multiply;opacity:0;pointer-events:none;transition:opacity .2s}
+.garden-grove .g-tree{position:relative;z-index:1}
+.grove-dress{position:absolute;top:6px;right:6px;z-index:2;border:1px solid var(--line-solid);background:var(--paper-raised);border-radius:8px;font-size:11px;font-family:var(--sans);padding:3px 8px;cursor:pointer;opacity:0;transition:opacity .15s;color:var(--ink-soft)}
+.garden-grove:hover .grove-dress{opacity:.95}
+.grove-dress:hover{border-color:var(--accent);color:var(--accent)}
+.garden-grove.drag-over{outline:2px dashed var(--accent);outline-offset:-3px}
+.g-grain{display:flex;gap:4px;margin-left:12px;margin-right:auto;align-self:flex-end}
+.grove-editor{position:fixed;right:18px;bottom:18px;z-index:145;width:min(340px,92vw);background:var(--paper-raised);border:1px solid var(--line-solid);border-radius:14px;padding:14px;box-shadow:0 14px 44px rgba(0,0,0,.22);display:none}
+.grove-editor.show{display:block}
+.ge-head{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;margin-bottom:10px;font-family:var(--sans)}
+.ge-head .close{background:none;border:none;font-size:20px;color:var(--ink-soft);cursor:pointer;line-height:1}
+.ge-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.ge-lbl{font-size:12px;color:var(--ink-soft);font-family:var(--sans);flex:0 0 auto}
+.ge-row input[type=range]{flex:1;accent-color:var(--accent)}
+#ge-color{width:44px;height:30px;border:1px solid var(--line-solid);border-radius:7px;background:none;padding:2px;cursor:pointer}
+.ge-tip{font-size:11px;color:var(--ink-faint);flex:1;line-height:1.45}
+.ge-foot{margin-bottom:0}
+.fp-chip.editing{cursor:default}
+.fp-chip .fp-x{margin-left:5px;color:var(--ink-soft);font-weight:700;cursor:pointer;padding:0 2px}
+.fp-chip .fp-x:hover{color:#b3563f}
+.fp-edit-on{border-color:var(--accent)!important;color:var(--accent)!important}
 .g-tree{width:64px;text-align:center}
 .g-tree-art{color:var(--green);cursor:pointer;height:52px;display:flex;align-items:flex-end;justify-content:center;transition:transform .15s;position:relative}
 .g-tree-art:hover{transform:translateY(-3px) scale(1.05)}
@@ -778,8 +947,15 @@ html.journey-only .journey-page{display:flex!important}
 /* Quill 书库精灵 */
 .quill-fab{position:fixed;right:24px;bottom:24px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;z-index:96;
   background:linear-gradient(135deg,var(--accent),#7a4632);box-shadow:0 6px 20px rgba(154,91,66,.45);
-  display:flex;align-items:center;justify-content:center;transition:transform .2s}
+  display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;
+  animation:qfabBreath 4.6s ease-in-out infinite}
+@keyframes qfabBreath{0%,100%{box-shadow:0 6px 20px rgba(154,91,66,.45)}50%{box-shadow:0 6px 22px rgba(154,91,66,.32),0 0 16px 2px rgba(154,91,66,.28)}}
+.quill-fab{color:#fff}
 .quill-fab svg{width:26px;height:26px;fill:#fff;stroke:#fff}
+svg.q-dyn{fill:none;stroke:none}
+.q-dyn .ln{fill:none!important;stroke:currentColor!important}
+.q-dyn .fl{fill:currentColor!important;stroke:none!important}
+.qav{color:var(--ink-soft)}
 .quill-fab:hover{transform:scale(1.08) rotate(-8deg)}
 .quill-fab:active{transform:scale(.95)}
 /* 形象点击微互动 */
@@ -795,17 +971,24 @@ html.journey-only .journey-page{display:flex!important}
   background:var(--paper-raised);border:1px solid var(--line-solid);border-radius:18px;z-index:97;
   box-shadow:0 16px 50px rgba(43,38,32,.3);display:none;flex-direction:column;overflow:hidden}
 .quill-panel.show{display:flex}
-.quill-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line-solid);
+.quill-head{position:sticky;top:0;z-index:6;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line-solid);
   background:linear-gradient(135deg,var(--accent),#7a4632)}
 .quill-id{display:flex;align-items:center;gap:8px;color:#fff}
 .quill-id b{font-size:16px}
 .quill-sub{font-family:var(--sans);font-size:11px;color:rgba(255,255,255,.7)}
 .quill-dot{width:8px;height:8px;border-radius:50%;background:#8fd07a;box-shadow:0 0 8px #8fd07a}
+.quill-dot.standby{background:#e0b64f;box-shadow:0 0 8px #e0b64f}
+.quill-dot.err{background:#d06b57;box-shadow:0 0 8px #d06b57}
+.quill-dot.thinking{animation:qbreath 1.4s ease-in-out infinite}
+@keyframes qbreath{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.7);opacity:.45}}
 .quill-gear,.quill-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:18px;margin-left:6px;vertical-align:middle}
 .quill-gear svg{width:15px;height:15px;fill:#fff}
 .quill-gear:hover,.quill-close:hover{background:rgba(255,255,255,.28)}
-.quill-settings{display:none;padding:14px 16px;border-bottom:1px solid var(--line-solid);background:var(--paper);font-family:var(--sans)}
-.quill-settings.show{display:block}
+.quill-settings{display:none;padding:0 16px 14px;border-bottom:1px solid var(--line-solid);background:var(--paper);font-family:var(--sans)}
+.quill-settings.show{display:block;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.quill-panel.settings-open .quill-msgs,.quill-panel.settings-open .quill-input{display:none}
+.qs-top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;background:var(--paper);padding:12px 0 9px;border-bottom:1px solid var(--line-solid);margin-bottom:10px;font-size:13px;color:var(--ink-soft)}
+.qs-top-x{cursor:pointer;color:var(--accent);font-size:12px;padding:3px 8px;border-radius:8px;background:var(--accent-soft)}
 /* 会话记录 */
 .quill-sessions{display:none;border-bottom:1px solid var(--line-solid);background:var(--paper);max-height:240px;overflow-y:auto}
 .quill-sessions.show{display:block}
@@ -822,10 +1005,15 @@ html.journey-only .journey-page{display:flex!important}
 .qsess-del:hover{color:var(--accent)}
 /* 消息收藏星标 */
 .qm{position:relative}
-.qm.quill:hover .qm-star{opacity:.5}
-.qm-star{position:absolute;right:-22px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:14px;opacity:0;transition:opacity .15s;color:var(--gold)}
-.qm-star:hover{opacity:1!important}
-.qm-star.on{opacity:1;color:var(--gold)}
+.qm-act{position:absolute;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:5px;align-items:center}
+.qm.quill .qm-act{right:-24px}
+.qm.user .qm-act{left:-24px}
+.qm-act span{font-size:13px;cursor:pointer;opacity:0;transition:opacity .15s;color:var(--ink-faint)}
+.qm:hover .qm-act span{opacity:.55}
+.qm-act span:hover{opacity:1!important;color:var(--accent)}
+.qm-star{color:var(--gold)}
+.qm-star.on{opacity:1!important}
+.qm-redo,.qm-recall{font-size:14px}
 .qs-row{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-bottom:10px}
 .qs-row select{font-family:var(--sans);font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line-solid);background:var(--paper-raised);color:var(--ink)}
 .qs-persona span{display:block;font-size:11px;color:var(--ink-faint);margin-bottom:6px;line-height:1.5}
@@ -848,7 +1036,376 @@ html.journey-only .journey-page{display:flex!important}
   box-shadow:0 0 10px 3px rgba(255,230,130,.7);animation:firefly-glow 4s ease-in-out forwards}
 .qs-hint{font-size:11px;color:var(--ink-faint);line-height:1.6;margin:-4px 0 12px;padding:8px 10px;background:var(--accent-soft);border-radius:8px}
 .qs-persona textarea{width:100%;min-height:52px;resize:vertical;font-family:var(--sans);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line-solid);background:var(--paper-raised);color:var(--ink);outline:none}
-.quill-quick{display:flex;flex-wrap:wrap;gap:7px;padding:12px 16px;border-bottom:1px solid var(--line-solid)}
+.quill-quick{display:flex;flex-wrap:wrap;gap:7px;padding:12px 16px;border-bottom:1px solid var(--line-solid);position:relative}
+.quill-quick.folded{max-height:82px;overflow:hidden}
+.qq-more{position:absolute;right:10px;bottom:6px;font-size:11px;color:var(--accent);cursor:pointer;background:var(--paper);padding:0 6px;border-radius:8px;z-index:2}
+#qdraw{display:none;position:fixed;inset:0;z-index:320;background:rgba(30,24,16,.45)}
+#qdraw .qd-box{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);text-align:center}
+#qdraw .qd-tube{width:96px;height:120px;margin:0 auto;transform-origin:50% 90%}
+#qdraw.shaking .qd-tube{animation:qd-shake 1.1s ease}
+@keyframes qd-shake{0%,100%{transform:rotate(0)}15%{transform:rotate(-14deg)}30%{transform:rotate(12deg)}45%{transform:rotate(-10deg)}60%{transform:rotate(8deg)}75%{transform:rotate(-5deg)}}
+#qdraw .qd-stick{width:150px;margin:14px auto 0;background:#f7f1e3;border:2px solid #b98;border-radius:10px;padding:16px 10px;font-family:var(--serif);font-size:26px;letter-spacing:6px;color:#7a4a2a;opacity:0;transform:translateY(18px)}
+#qdraw.revealed .qd-stick{animation:qd-pop .5s ease forwards}
+@keyframes qd-pop{to{opacity:1;transform:translateY(0)}}
+#qdraw .qd-tip{margin-top:10px;font-size:12px;color:#f4ead6}
+.qd-conf{position:fixed;top:-14px;width:9px;height:15px;border-radius:2px;z-index:321;animation:qd-fall linear forwards}
+@keyframes qd-fall{to{transform:translateY(110vh) rotate(720deg)}}
+.quill-fab.celebrate{animation:qf-cele 2.2s ease}
+#qgame{display:none;position:fixed;inset:0;z-index:320;background:rgba(30,24,16,.45)}
+#qgame .qg-box{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);background:var(--paper);border-radius:18px;padding:22px 26px;text-align:center;min-width:260px}
+#qgame .qg-hands{font-size:44px;display:flex;gap:26px;justify-content:center;margin:10px 0;perspective:200px}
+#qgame.rolling .qg-me,#qgame.rolling .qg-you{animation:qg-bob .5s ease infinite}
+@keyframes qg-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+#qgame .qg-me,#qgame .qg-you{display:inline-block;transform-style:preserve-3d}
+#qgame.dice-tumble .qg-me,#qgame.dice-tumble .qg-you{animation:qg-tumble .3s linear infinite}
+#qgame.dice-tumble .qg-you{animation-delay:-.06s}
+@keyframes qg-tumble{0%{transform:rotateX(0) rotateY(0) translateY(0)}25%{transform:rotateX(110deg) rotateY(70deg) translateY(-16px)}
+  50%{transform:rotateX(220deg) rotateY(150deg) translateY(0)}75%{transform:rotateX(300deg) rotateY(260deg) translateY(-10px)}
+  100%{transform:rotateX(360deg) rotateY(360deg) translateY(0)}}
+#qgame.dice-settle .qg-me,#qgame.dice-settle .qg-you{animation:qg-settle .4s cubic-bezier(.3,1.7,.4,1)}
+@keyframes qg-settle{0%{transform:scale(1.32) rotate(9deg)}55%{transform:scale(.9) rotate(-5deg)}100%{transform:scale(1) rotate(0)}}
+#qgame .qg-pick button{font-size:26px;background:var(--accent-soft);border:none;border-radius:12px;padding:6px 14px;margin:0 5px;cursor:pointer}
+#qgame .qg-res{font-family:var(--serif);font-size:16px;margin-top:10px;min-height:44px;color:var(--ink)}
+.quill-dot.mood-win{animation:qmood-p .45s 4 alternate}
+.quill-dot.mood-lose{animation:qmood-b .45s 4 alternate}
+.quill-dot.mood-tie{animation:qmood-g .45s 4 alternate}
+/* ── Quill 情绪光点（goo 流体，v4.5.1 按验收编排重做）──
+   平时=三态灯：接好绿 / 待命暗琥珀 / 出错红；情绪临时接管颜色，演完流回状态色 */
+.quill-dot.qmood{width:26px;height:26px;background:transparent!important;box-shadow:none!important;border-radius:0;cursor:pointer;color:#8fd07a;transition:color .5s ease;position:relative}
+.quill-dot.qmood svg{display:block;width:26px;height:26px;overflow:visible;animation:qmGlowBreath 3.4s ease-in-out infinite}
+@keyframes qmGlowBreath{0%,100%{filter:drop-shadow(0 0 3px currentColor);transform:scale(1)}50%{filter:drop-shadow(0 0 11px currentColor);transform:scale(1.14)}}
+.quill-dot.qmood circle{fill:currentColor}
+.quill-dot.qmood .qm-g,.quill-dot.qmood .qm-a,.quill-dot.qmood .qm-b,.quill-dot.qmood .qm-c{transform-origin:20px 20px}
+.quill-dot.qmood .qm-c{transform:scale(0)}
+.quill-dot.qmood .qm-a{animation:qmBreath 3.4s ease-in-out infinite}
+.quill-dot.qmood .qm-b{animation:qmBreath 3.4s .35s ease-in-out infinite}   /* 副珠慢半拍，静止时也有一点液体的滞后感 */
+.quill-dot.qmood.standby{color:#c9a86a}
+.quill-dot.qmood.err{color:#d06b57}
+.quill-dot.qmood.thinking .qm-a{animation:qmThink 1.3s ease-in-out infinite}
+.quill-dot.qmood.thinking .qm-b{animation:qmThink 1.3s .18s ease-in-out infinite}
+/* v4.6：思考态弹动速度/颜色跟着"刚才的心情"走，而不是永远一个节奏 */
+.quill-dot.qmood.thinking.think-happy{color:#e8547e}
+.quill-dot.qmood.thinking.think-happy .qm-a{animation:qmThink .62s cubic-bezier(.4,.1,.3,1) infinite}
+.quill-dot.qmood.thinking.think-happy .qm-b{animation:qmThink .62s .1s cubic-bezier(.4,.1,.3,1) infinite}
+.quill-dot.qmood.thinking.think-shy{color:#f2a0b6}
+.quill-dot.qmood.thinking.think-shy .qm-a{animation:qmThink 2.3s ease-in-out infinite}
+.quill-dot.qmood.thinking.think-shy .qm-b{animation:qmThink 2.3s .3s ease-in-out infinite}
+.quill-dot.qmood.thinking.think-sad{color:#7fa3d1}
+.quill-dot.qmood.thinking.think-sad .qm-a{animation:qmThinkLow 2.1s ease-in-out infinite}
+.quill-dot.qmood.thinking.think-sad .qm-b{animation:qmThinkLow 2.1s .25s ease-in-out infinite}
+.quill-dot.qmood.thinking.think-surprise{color:#f5c93e}
+.quill-dot.qmood.thinking.think-surprise .qm-a{animation:qmThink .78s ease-in-out infinite}
+.quill-dot.qmood.thinking.think-surprise .qm-b{animation:qmThink .78s .1s ease-in-out infinite}
+.quill-dot.qmood.thinking.think-confused{color:#b9a3d9}
+.quill-dot.qmood.thinking.think-confused .qm-a{animation:qmThink 1.6s ease-in-out infinite}
+.quill-dot.qmood.thinking.think-confused .qm-b{animation:qmThink 1.6s .22s ease-in-out infinite}
+@keyframes qmThinkLow{0%,100%{transform:scale(.92)}50%{transform:scale(1.1)}}
+@keyframes qmBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes qmThink{0%,100%{transform:scale(.82)}50%{transform:scale(1.22)}}
+/* 开心（暖橙）：压一下蓄力→分裂两点、小卫星垫在下方凹出微笑弧→整个顺时针转两圈→合回果冻弹一下 */
+.quill-dot.qmood.qm-happy{color:#e8547e}
+.quill-dot.qmood.qm-happy .qm-a{animation:qmHapA 2.6s cubic-bezier(.45,0,.3,1)}
+.quill-dot.qmood.qm-happy .qm-b{animation:qmHapB 2.6s cubic-bezier(.45,0,.3,1)}
+.quill-dot.qmood.qm-happy .qm-c{animation:qmHapC 2.6s cubic-bezier(.45,0,.3,1)}
+.quill-dot.qmood.qm-happy .qm-g{animation:qmHapSpin 2.6s cubic-bezier(.55,.05,.3,1)}
+@keyframes qmHapA{0%{transform:translate(0,0) scale(1)}5%{transform:translate(0,0) scale(1.2,.82)}10%{transform:translate(0,0) scale(.94,1.1)}15%{transform:translate(0,0) scale(1.18,.85)}20%{transform:translate(0,0) scale(.96,1.06)}26%{transform:translate(0,1px) scale(1.15,.8)}40%,76%{transform:translate(-6.2px,1.5px) scale(.92)}88%{transform:translate(0,0) scale(.88)}94%{transform:translate(0,-1px) scale(1.16)}100%{transform:translate(0,0) scale(1)}}
+@keyframes qmHapB{0%{transform:translate(0,0) scale(1)}5%{transform:translate(0,0) scale(1.2,.82)}10%{transform:translate(0,0) scale(.94,1.1)}15%{transform:translate(0,0) scale(1.18,.85)}20%{transform:translate(0,0) scale(.96,1.06)}26%{transform:translate(0,1px) scale(1.15,.8)}40%,76%{transform:translate(6.2px,1.5px) scale(.92)}88%,100%{transform:translate(0,0) scale(1)}}
+@keyframes qmHapC{0%,26%{transform:translate(0,2px) scale(0)}36%,74%{transform:translate(0,5.5px) scale(1)}86%,100%{transform:translate(0,0) scale(0)}}
+@keyframes qmHapSpin{0%,36%{transform:rotate(0)}82%,100%{transform:rotate(720deg)}}
+/* 低落（蓝）：压扁下沉、挂着晃两下、滴下一小滴、再浮回抖擞一下 */
+.quill-dot.qmood.qm-sad{color:#7fa3d1}
+.quill-dot.qmood.qm-sad .qm-g{animation:qmSadG 2.4s ease-in-out;transform-origin:20px 9px}
+.quill-dot.qmood.qm-sad .qm-a{animation:qmSadA 2.4s ease-in-out}
+.quill-dot.qmood.qm-sad .qm-b{animation:qmSadB 2.4s ease-in-out}
+.quill-dot.qmood.qm-sad .qm-c{animation:qmSadDrip 2.4s ease-in}
+@keyframes qmSadG{0%{transform:translateY(0) rotate(0)}15%{transform:translateY(3px) rotate(0)}30%{transform:translateY(4px) rotate(-6deg)}50%{transform:translateY(4px) rotate(5deg)}70%{transform:translateY(4px) rotate(0)}88%{transform:translateY(-1px) rotate(0)}100%{transform:translateY(0) rotate(0)}}
+/* 下撇嘴：左右两颗珠子往外、往下垂，形成一个倒扣的弧——跟开心那个笑弧刚好反过来 */
+@keyframes qmSadA{0%{transform:translate(0,0) scale(1)}20%,70%{transform:translate(-5.2px,3.2px) scale(.9,1.05)}88%{transform:translate(-1.5px,0) scale(.95)}100%{transform:translate(0,0) scale(1)}}
+@keyframes qmSadB{0%{transform:translate(0,0) scale(1)}20%,70%{transform:translate(5.2px,3.2px) scale(.9,1.05)}88%{transform:translate(1.5px,0) scale(.95)}100%{transform:translate(0,0) scale(1)}}
+/* 泪珠：在嘴角低垂处鼓起、拉长下坠、消失——不是通用水滴，是从下撇嘴角那个点长出来的 */
+@keyframes qmSadDrip{0%,20%{transform:translate(3.6px,2px) scale(0);opacity:0}30%{transform:translate(3.6px,4px) scale(.75);opacity:1}55%{transform:translate(3.2px,9px) scale(.55);opacity:1}78%{transform:translate(3px,15px) scale(.28);opacity:.75}90%,100%{transform:translate(3px,16px) scale(0);opacity:0}}
+/* 惊讶（亮金）：扩大缩小来回果冻弹动（挤压拉伸反相），副珠慢一拍跟着晃出液感 */
+.quill-dot.qmood.qm-surprise{color:#f5c93e}
+.quill-dot.qmood.qm-surprise .qm-a{animation:qmSurp 1.6s cubic-bezier(.32,1.8,.45,1)}
+.quill-dot.qmood.qm-surprise .qm-b{animation:qmSurp 1.6s .07s cubic-bezier(.32,1.8,.45,1)}
+@keyframes qmSurp{0%{transform:scale(1,1)}16%{transform:scale(1.85,1.7)}34%{transform:scale(.62,.78)}52%{transform:scale(1.45,1.28)}68%{transform:scale(.85,.95)}82%{transform:scale(1.14,1.08)}100%{transform:scale(1,1)}}
+/* 害羞（浅粉）：不再发抖快闪，改成比平时更慢的呼吸，安安静静地浮动几下 */
+.quill-dot.qmood.qm-shy{color:#f7b8cc}
+/* v4.6：情绪场压着的时候，外部触发的开心/害羞降级成这个——不蹦不闪，只是稳稳地在，像"我在，没事的" */
+.quill-dot.qmood.qm-care{color:#c9836a}
+.quill-dot.qmood.qm-care .qm-a{animation:qmCareBreath 1.8s ease-in-out infinite}
+.quill-dot.qmood.qm-care .qm-b{animation:qmCareBreath 1.8s .25s ease-in-out infinite}
+@keyframes qmCareBreath{0%,100%{transform:scale(.96)}50%{transform:scale(1.08)}}
+.quill-dot.qmood.qm-shy .qm-a{animation:qmShyBreath 1.3s ease-in-out 3}
+.quill-dot.qmood.qm-shy .qm-b{animation:qmShyBreath 1.3s .3s ease-in-out 3}
+.quill-dot.qmood.qm-shy .qm-g{animation:qmShyTilt 3.9s ease-in-out}
+@keyframes qmShyBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+@keyframes qmShyTilt{0%,100%{transform:rotate(0)}15%,85%{transform:rotate(6deg)}}
+/* 疑惑（淡紫）：下点沉底做问号的点、上点转半圈拖出问号的钩（小卫星描出尾迹）、歪头起伏两下合回。
+   钩的画法：主珠先偏到轨道上（translateY -6.5），再靠自转扫过 200° —— 圆弧是转出来的，不是关键帧硬跳 */
+.quill-dot.qmood.qm-confused{color:#b9a3d9}
+.quill-dot.qmood.qm-confused .qm-a{animation:qmConfA 2.8s cubic-bezier(.5,.05,.35,1)}
+.quill-dot.qmood.qm-confused .qm-b{animation:qmConfB 2.8s ease-in-out}
+.quill-dot.qmood.qm-confused .qm-c{animation:qmConfA 2.8s .14s cubic-bezier(.5,.05,.35,1),qmConfC 2.8s linear}
+.quill-dot.qmood.qm-confused .qm-g{animation:qmConfTilt 2.8s ease-in-out;transform-origin:20px 30px}
+@keyframes qmConfA{0%{transform:rotate(0) translateY(0)}12%{transform:rotate(-100deg) translateY(-6.5px)}44%{transform:rotate(100deg) translateY(-6.5px)}54%{transform:rotate(148deg) translateY(-5px)}58%,70%{transform:rotate(148deg) translateY(-5px)}86%{transform:rotate(360deg) translateY(-1px)}100%{transform:rotate(360deg) translateY(0)}}
+@keyframes qmConfB{0%{transform:translate(0,0) scale(1)}16%,74%{transform:translate(0,7.5px) scale(.6)}90%,100%{transform:translate(0,0) scale(1)}}
+@keyframes qmConfC{0%,10%{opacity:0}14%,60%{opacity:1}74%,100%{opacity:0}}
+@keyframes qmConfTilt{0%,100%{transform:rotate(0) translateY(0)}24%{transform:rotate(11deg) translateY(0)}56%{transform:rotate(11deg) translateY(-1.6px)}64%{transform:rotate(11deg) translateY(.8px)}72%{transform:rotate(11deg) translateY(-1px)}82%{transform:rotate(4deg) translateY(0)}}
+/* ── v4.3 · 节日佩饰：节日当天顶掉节气纹样，轻轻脉动 ── */
+/* v4.6：这条规则现在作用在悬浮换装时的浮钮本体图标上（见下方 .qf-skin-on），
+   不再挂在常驻小角标上——角标已删除，见 60_quill_extras.js 的重写说明。 */
+.quill-fab .qf-av.qf-fest-glow svg{animation:qfFestPulse 2.2s ease-in-out infinite}
+@keyframes qfFestPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
+/* 悬浮换装：羽毛→节气/节日插画，放大展示（!important 压过内联的 12~13px），配合摇一摇 */
+.quill-fab.qf-skin-on .qf-av svg{width:28px!important;height:28px!important;transition:width .18s ease,height .18s ease}
+.quill-fab .qf-av svg{transition:width .18s ease,height .18s ease}
+/* ── v4.3 · 塔罗抽牌（demo 验收版原样进面板）── */
+#qtarot{display:none;position:fixed;inset:0;z-index:324;background:rgba(30,24,16,.45);opacity:0;transition:opacity .28s ease}
+#qtarot.on{opacity:1}
+#qtarot .tt-panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(720px,96vw);max-height:94vh;display:flex;flex-direction:column;background:linear-gradient(180deg,#f6f1e6,#efe7d5);border-radius:20px;box-shadow:0 18px 60px rgba(0,0,0,.32);overflow:hidden;font-family:var(--serif);color:#3b352c}
+#qtarot .tt-title{text-align:center;font-size:15px;letter-spacing:.14em;color:#6a5f48;padding:14px 0 6px}
+#qtarot .tt-x{position:absolute;right:12px;top:10px;font-size:16px;color:#8a7f68;cursor:pointer;padding:4px 8px}
+.tt-modes{display:flex;justify-content:center;gap:5px;background:#fff8ec;border:1px solid #d9cdb4;border-radius:999px;padding:3px;margin:2px auto 0;width:max-content;max-width:94%}
+.tt-modes button{border:0;background:transparent;color:#8a7f68;font:inherit;font-size:12px;padding:5px 11px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.tt-modes button.on{background:#3b352c;color:#f4efe4}
+#tt-zone{position:relative;height:240px;flex:0 0 auto;overflow:visible;touch-action:none;user-select:none;-webkit-user-select:none}
+#tt-fan{position:absolute;left:50%;top:182px;width:1px;height:1px}
+@keyframes ttShuffleJit{0%{transform:rotate(0) translateY(0)}20%{transform:rotate(-4.5deg) translateY(-3px)}
+  40%{transform:rotate(3.5deg) translateY(1px)}60%{transform:rotate(-3deg) translateY(-2px)}
+  80%{transform:rotate(2deg) translateY(0)}100%{transform:rotate(0) translateY(0)}}
+#tt-zone.tt-shuffling #tt-fan{animation:ttShuffleJit .5s ease-in-out}
+.tt-stage{position:relative;flex:1;min-height:0;overflow:hidden}
+.tt-circle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(120%,420px);height:auto;
+  fill:none;stroke:#b98a3e;stroke-width:1;opacity:.15;pointer-events:none}
+.tt-circle circle{fill:#b98a3e;stroke:none;opacity:.6}
+.tt-circle circle.tt-moon-lit{fill:#e9d9b0;opacity:.85;stroke:#b98a3e;stroke-width:.6}
+.tt-circle circle.tt-moon-dark{fill:#8a7355;opacity:.7;stroke:none}
+.tt-card{position:absolute;width:64px;height:98px;margin:-49px 0 0 -32px;border-radius:9px;transform-origin:50% 50%;will-change:transform}
+.tt-back{width:100%;height:100%;border-radius:9px;background:repeating-linear-gradient(45deg,#7b2f3a 0 6px,#6d2833 6px 12px);border:2px solid #e9d9b0;box-shadow:0 4px 10px rgba(0,0,0,.26);position:relative;overflow:hidden}
+.tt-back::after{content:"";position:absolute;inset:7px;border:1px solid #e9d9b0;border-radius:5px;background:radial-gradient(circle at 50% 40%,rgba(233,217,176,.85) 0 3px,transparent 4px)}
+.tt-card.tt-sel .tt-back{box-shadow:0 6px 16px rgba(0,0,0,.34),0 0 0 2px #b98a3e}
+.tt-card.tt-pulling{cursor:grabbing}
+.tt-card.tt-armed .tt-back{box-shadow:0 10px 24px rgba(0,0,0,.36),0 0 0 3px #b98a3e,0 0 18px rgba(185,138,62,.65)}
+#tt-result{position:relative;z-index:1;height:100%;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:flex-start;padding:8px 14px 6px;overflow-y:auto;min-height:0}
+#tt-result.tt-grid{display:flex;align-items:center;justify-content:center;gap:22px;padding:6px;flex-wrap:nowrap}
+#tt-cross{position:relative;display:grid;grid-template-columns:repeat(3,56px);grid-auto-rows:min-content;row-gap:10px;column-gap:8px;justify-items:center;padding-top:2px}
+#tt-staff{display:flex;flex-direction:column;gap:7px;align-items:center}
+/* 中间十字：目标在上，根基在下，未来—现状—过去横排，挑战横压在现状上（传统摆法，位置本身就是解读的一部分） */
+#tt-cross #tt-slot-2{grid-column:2;grid-row:1}
+#tt-cross #tt-slot-5{grid-column:1;grid-row:2}
+#tt-cross #tt-slot-0{grid-column:2;grid-row:2}
+#tt-cross #tt-slot-1{grid-column:2;grid-row:2;transform:rotate(90deg) scale(.82);z-index:3;pointer-events:none}
+#tt-cross #tt-slot-4{grid-column:3;grid-row:2}
+#tt-cross #tt-slot-3{grid-column:2;grid-row:3}
+/* 右侧纵列：结局在最上，往下是期盼、环境、自身 */
+#tt-staff #tt-slot-9{order:1}
+#tt-staff #tt-slot-8{order:2}
+#tt-staff #tt-slot-7{order:3}
+#tt-staff #tt-slot-6{order:4}
+.tt-rc{width:88px;perspective:900px;text-align:center;opacity:1;transition:transform .3s cubic-bezier(.3,1.6,.4,1)}
+.tt-rc.tt-slot .tt-b-empty{position:relative;width:100%;aspect-ratio:2/3;border:2px dashed rgba(185,138,62,.4);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15)}
+.tt-rc.tt-slot .tt-b-empty::after{content:'';width:8px;height:8px;border-radius:50%;background:rgba(185,138,62,.35)}
+.tt-rc.tt-landed{animation:ttLand .5s cubic-bezier(.3,1.7,.4,1)}
+@keyframes ttLand{0%{transform:scale(.7)}55%{transform:scale(1.1)}100%{transform:scale(1)}}
+.tt-rc.tt-big{width:118px}
+.tt-rc.tt-mini{width:56px}
+.tt-pos{display:block;font-size:11px;color:#b98a3e;letter-spacing:.06em;margin-bottom:3px}
+.tt-in{position:relative;width:100%;aspect-ratio:2/3;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.85,.25,1);transform:rotateY(180deg) translateY(14px)}
+.tt-rc.tt-flip .tt-in{transform:rotateY(0) translateY(0)}
+.tt-b,.tt-f{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;overflow:hidden}
+.tt-b{background:repeating-linear-gradient(45deg,#7b2f3a 0 6px,#6d2833 6px 12px);border:2px solid #e9d9b0;transform:rotateY(180deg)}
+.tt-f{background:linear-gradient(180deg,#fdf8ec,#f1e7d1);border:2px solid #b98a3e;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:8px 4px;box-shadow:0 8px 20px rgba(0,0,0,.22)}
+.tt-rev .tt-f{border-color:#9a6b8a}
+.tt-num{font-size:11px;letter-spacing:.14em;color:#b98a3e}.tt-rev .tt-num{color:#9a6b8a}
+.tt-sym{color:#b98a3e;line-height:0}.tt-rev .tt-sym{color:#9a6b8a}
+.tt-nm{font-size:13px;font-weight:700}.tt-mini .tt-nm{font-size:11px}
+.tt-kw{font-size:9px;color:#8a7f68;letter-spacing:.04em;line-height:1.3;padding:0 2px}
+.tt-mini .tt-kw{display:none}
+#tt-act{display:none;text-align:center;padding:8px 0 14px}
+#tt-act button{font:inherit;font-size:13px;border:1px solid #b98a3e;background:#fff8ec;color:#3b352c;padding:8px 16px;border-radius:999px;margin:0 4px;cursor:pointer}
+#tt-act button.tt-p{background:#3b352c;color:#f4efe4;border-color:#3b352c}
+@media (max-width:560px){.tt-rc{width:78px}.tt-rc.tt-mini{width:58px}}
+@keyframes qmood-p{to{background:#e8a0b4;box-shadow:0 0 10px #e8a0b4;transform:scale(1.5)}}
+@keyframes qmood-b{to{background:#7fa8d9;box-shadow:0 0 10px #7fa8d9;transform:scale(1.5)}}
+@keyframes qmood-g{to{background:#e0c060;box-shadow:0 0 10px #e0c060;transform:scale(1.5)}}
+.quill-dot.mood-shy{animation:qmood-p .3s 6 alternate}
+/* ── 摸头：浮钮粉光快闪 + 小心心 + 私房话气泡 ── */
+.quill-fab.pat-glow{animation:qpat .3s 6 alternate}
+@keyframes qpat{to{box-shadow:0 6px 20px rgba(154,91,66,.45),0 0 16px 5px #e8a0b4}}
+.qf-heart{position:fixed;z-index:97;font-size:13px;color:#e8a0b4;pointer-events:none;user-select:none;animation:qheart 1.1s ease forwards}
+@keyframes qheart{from{opacity:0;transform:translateY(4px) scale(.6)}30%{opacity:1}to{opacity:0;transform:translateY(-32px) scale(1.15)}}
+.q-bubble{position:fixed;z-index:97;max-width:230px;background:var(--paper-raised);border:1px solid var(--line-solid);border-radius:12px 12px 4px 12px;padding:8px 12px;font-size:12.5px;line-height:1.55;color:var(--ink);box-shadow:0 6px 20px rgba(0,0,0,.16);animation:qbub .25s ease}
+@keyframes qbub{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+/* ── 打盹：羽毛垂头轻摇 + 灯转暖黄慢呼吸 + 飘小 z；偶尔翻个身（转一圈） ── */
+.quill-fab .qf-av{display:inline-flex;align-items:center;justify-content:center}
+.quill-fab.dozing{opacity:.85;animation:qdozeglow 3.8s ease-in-out infinite}
+@keyframes qdozeglow{0%,100%{box-shadow:0 6px 20px rgba(154,91,66,.4)}50%{box-shadow:0 6px 18px rgba(154,91,66,.28),0 0 15px 3px rgba(228,190,110,.55)}}
+.quill-fab.dozing .qf-av{animation:qdoze 4.4s ease-in-out infinite;transform-origin:50% 82%}
+@keyframes qdoze{0%,100%{transform:rotate(13deg)}50%{transform:rotate(21deg)}}
+.quill-fab.roll .qf-av{animation:qroll 2.3s cubic-bezier(.5,.05,.3,1)!important}
+@keyframes qroll{0%{transform:rotate(14deg)}62%{transform:rotate(382deg)}80%{transform:rotate(368deg)}100%{transform:rotate(374deg)}}
+.qf-z{position:fixed;z-index:95;font-family:var(--sans);font-size:12px;color:var(--ink-faint);pointer-events:none;user-select:none;animation:qz 2.6s ease forwards}
+@keyframes qz{from{opacity:0;transform:translate(0,2px) scale(.7)}25%{opacity:.9}to{opacity:0;transform:translate(-11px,-28px) scale(1.15) rotate(-14deg)}}
+/* ── 浮钮小徽章：连读火苗（右上）/ 节气佩饰（左下） ── */
+/* v4.6：常驻小角标（右上角火苗 / 左下角节气圆点）已退役，见上方悬浮换装 */
+/* ── 习惯打卡 ── */
+.qh-row{display:flex;align-items:center;gap:7px;margin:5px 0;font-size:12px}
+.qh-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qh-fire{color:#c76b3f;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:2px}
+.qh-dots{display:flex;gap:2px}
+.qh-dots i{width:6px;height:6px;border-radius:50%;background:var(--line-solid)}
+.qh-dots i.on{background:var(--green)}
+.qh-goal{color:var(--ink-faint);white-space:nowrap}
+.qh-btn{border:1px solid var(--line-solid);background:var(--paper);color:var(--ink);border-radius:8px;padding:2px 9px;cursor:pointer;font-size:11px;font-family:var(--sans)}
+.qh-btn.done{background:var(--accent-soft);color:var(--accent);border-color:transparent;cursor:default}
+.qh-x{color:#b3563f;cursor:pointer;padding:0 2px}
+.qh-edit{color:var(--accent);cursor:pointer;padding:0 2px}
+/* 习惯 · 月历热力图（打过卡的日子会亮起来） */
+.qhm{margin:2px 0 10px}
+.qhm-top{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);margin-bottom:5px}
+.qhm-top b{color:var(--ink);font-weight:600}
+.qhm-nav{cursor:pointer;color:var(--ink-faint);padding:0 4px;user-select:none;font-size:13px}
+.qhm-nav:hover{color:var(--accent)}
+.qhm-grid{display:grid;grid-template-columns:repeat(7,16px);gap:3px}
+.qhm-grid b{font-size:9px;color:var(--ink-faint);text-align:center;font-weight:400;line-height:10px}
+.qhm-cell{width:16px;height:16px;border-radius:5px;background:var(--paper);border:1px solid var(--line-solid);position:relative;box-sizing:border-box}
+.qhm-cell.off{opacity:.28;border-style:dashed}
+.qhm-cell.h1{background:#d6e6cb;border-color:#bcd4ac}
+.qhm-cell.h2{background:#a9c98f;border-color:#93b87a}
+.qhm-cell.h3{background:#7fa96b;border-color:#6d9a59}
+.qhm-cell.full::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff}
+.qhm-cell.today{border:2px solid var(--accent)}
+.qh-sum{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-soft);margin:2px 0 6px}
+.qh-sum b{color:var(--ink)}
+.qh-bar{height:4px;border-radius:2px;background:var(--line-solid);margin:3px 0 2px;overflow:hidden;max-width:150px}
+.qh-bar i{display:block;height:100%;background:var(--green);border-radius:2px}
+.qh-bar.medal i{background:linear-gradient(90deg,#d9a441,#f2c869)}
+#qh-digest{font:inherit;font-size:11px;border:1px solid var(--line-solid);border-radius:6px;background:var(--paper);color:var(--ink);padding:1px 3px}
+/* ── 悬浮小彩蛋：Quill 摇一摇→转个圈→火苗报连读天数 ── */
+@keyframes qwig{0%,100%{transform:rotate(0)}25%{transform:rotate(-11deg)}60%{transform:rotate(9deg)}85%{transform:rotate(-4deg)}}
+.quill-fab.q-wiggle{animation:qwig .48s ease-in-out}
+.qf-flare{position:fixed;z-index:325;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:14px;
+  background:var(--paper-raised);border:1px solid var(--line-solid);box-shadow:0 8px 26px rgba(43,38,32,.22);
+  font-family:var(--sans);font-size:12.5px;font-weight:600;color:#c76b3f;pointer-events:none;
+  opacity:0;transform:translateY(8px) scale(.72);transition:opacity .32s ease,transform .42s cubic-bezier(.28,1.5,.4,1)}
+.qf-flare.on{opacity:1;transform:translateY(0) scale(1)}
+.qf-flare.bye{opacity:0;transform:translateY(-12px) scale(.9);transition:all .45s ease}
+@keyframes qflick{0%,100%{transform:scaleY(1)}45%{transform:scaleY(.86) scaleX(1.08)}70%{transform:scaleY(1.1)}}
+.qf-flare-ic{display:inline-flex;transform-origin:50% 90%;animation:qflick 1s ease-in-out infinite}
+/* ── 节气卡（海报式）：徽章点开 / 每日播报送达时展示 ── */
+#qterm{display:none;position:fixed;inset:0;z-index:326;background:rgba(30,24,16,.42);opacity:0;transition:opacity .3s ease}
+#qterm.on{opacity:1}
+.qt-card{position:absolute;left:50%;top:50%;width:264px;background:#f5f2ea;border-radius:13px;overflow:hidden;
+  box-shadow:0 22px 60px rgba(20,16,10,.4);transform:translate(-50%,-50%) scale(.9) translateY(10px);
+  transition:transform .5s cubic-bezier(.2,.9,.25,1.12)}
+#qterm.on .qt-card{transform:translate(-50%,-50%) scale(1) translateY(0)}
+.qt-art{height:212px;display:flex;align-items:center;justify-content:center;background:#f5f2ea}
+.qt-art svg{width:158px;height:186px;overflow:visible}
+.qt-body{display:flex;align-items:flex-end;gap:10px;padding:2px 18px 18px}
+.qt-name{font-family:var(--serif);font-size:41px;line-height:1.08;letter-spacing:2px;color:#3b352c;font-weight:600}
+.qt-name i{font-style:normal;display:block;opacity:0;transform:translateY(10px);animation:qtup .55s ease forwards}
+@keyframes qtup{to{opacity:1;transform:none}}
+.qt-seal{display:inline-block;width:9px;height:9px;background:#c0392b;border-radius:2px;margin-left:5px;vertical-align:2px}
+.qt-side{flex:1;text-align:right;padding-bottom:4px}
+.qt-phrase{font-family:var(--serif);font-size:12.5px;letter-spacing:3px;color:#6b6255;margin-bottom:6px}
+.qt-meta{font-family:var(--sans);font-size:9.5px;letter-spacing:1.2px;color:#a39a8c}
+.qt-fest{font-family:var(--serif);font-size:11.5px;color:#b3563f;margin-top:4px}
+.qt-x{position:absolute;right:10px;top:8px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:#8a8172;cursor:pointer;font-size:13px;background:rgba(255,255,255,.5)}
+.qt-x:hover{background:rgba(255,255,255,.9)}
+/* ── 日历（v4.6）：待办 + 习惯统一看，点哪天展开哪天 ── */
+#qcal{display:none;position:fixed;inset:0;z-index:327;background:rgba(30,24,16,.42);opacity:0;transition:opacity .28s ease}
+#qcal.on{opacity:1}
+.qcal-panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,94vw);max-height:88vh;
+  display:flex;flex-direction:column;background:var(--paper);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.3);
+  overflow:hidden;padding:16px 16px 10px;font-family:var(--sans)}
+.qcal-x{position:absolute;right:12px;top:10px;font-size:15px;color:var(--ink-faint);cursor:pointer;padding:4px 8px}
+.qcal-head{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:8px;position:relative}
+.qcal-head b{font-size:15px;color:var(--ink);letter-spacing:.04em}
+.qcal-nav{cursor:pointer;color:var(--ink-soft);font-size:17px;padding:0 8px;user-select:none}
+.qcal-nav:hover{color:var(--accent)}
+.qcal-wk{position:absolute;right:0;font-size:11px;color:var(--ink-soft);display:flex;align-items:center;gap:3px;cursor:pointer}
+.qcal-dow{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--ink-faint);margin-bottom:2px}
+.qcal-cells{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.qcal-cells.qcal-week{gap:5px}
+.qcal-cell{aspect-ratio:1;border-radius:9px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;cursor:pointer;position:relative}
+.qcal-week .qcal-cell{aspect-ratio:auto;padding:8px 2px}
+.qcal-cell:hover{background:rgba(0,0,0,.035)}
+.qcal-cell.today{border-color:var(--accent)}
+.qcal-cell.sel{background:var(--accent-soft)}
+.qcal-cell.dim{opacity:.32}
+.qcal-cell.qcal-blank{cursor:default}
+.qcal-d{font-size:12px;color:var(--ink)}
+.qcal-dot{font-size:8.5px;line-height:1;padding:1px 4px;border-radius:999px;font-weight:600}
+.qcal-dot.todo{background:#e8a0b4;color:#7a3550}
+.qcal-dot.habit{background:var(--line-solid);color:var(--ink-soft)}
+.qcal-dot.habit.full{background:var(--green);color:#fff}
+.qcal-loading{text-align:center;font-size:12px;color:var(--ink-faint);padding:20px 0}
+#qcal-detail{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-solid);overflow-y:auto;flex:1;min-height:0}
+.qcal-dhead{font-size:12.5px;color:var(--ink);font-weight:600;margin-bottom:6px}
+.qcal-dsub{font-size:11px;color:var(--ink-faint);margin:8px 0 4px}
+.qcal-item{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:4px 0;color:var(--ink)}
+.qcal-item.done{opacity:.45;text-decoration:line-through}
+.qcal-item a{cursor:pointer;color:var(--accent);flex:0 0 auto}
+.qcal-item .qcal-txt{flex:1;min-width:0;cursor:text}
+.qcal-item .qcal-txt i{font-style:normal;color:var(--ink-faint);font-size:11px;margin-left:4px}
+.qcal-item .qcal-del{color:#b3563f}
+.qcal-empty{font-size:12px;color:var(--ink-faint);padding:6px 0}
+/* 节气卡里的小动效（各纹样共用） */
+@keyframes qtDrop{0%{transform:translateY(0);opacity:0}12%{opacity:1}82%{opacity:1}100%{transform:translateY(66px);opacity:0}}
+@keyframes qtSway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes qtRock{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+@keyframes qtBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes qtBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes qtPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.12);opacity:.85}}
+@keyframes qtGlisten{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes qtRotSlow{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes qtPetal{0%{transform:translate(0,0) rotate(0);opacity:0}10%{opacity:.95}88%{opacity:.9}100%{transform:translate(-26px,96px) rotate(240deg);opacity:0}}
+@keyframes qtLeafFall{0%{transform:translate(0,0) rotate(0);opacity:0}10%{opacity:1}90%{opacity:.95}100%{transform:translate(-52px,110px) rotate(300deg);opacity:0}}
+@keyframes qtSnowFall{0%{transform:translate(0,-6px);opacity:0}12%{opacity:.95}55%{transform:translate(7px,52px)}100%{transform:translate(-4px,104px);opacity:0}}
+@keyframes qtDrip{0%{transform:translateY(0) scale(.6);opacity:0}18%{opacity:1;transform:translateY(4px) scale(1)}85%{opacity:1}100%{transform:translateY(58px) scale(1);opacity:0}}
+@keyframes qtShimmer{0%,100%{opacity:.25}50%{opacity:.8}}
+/* ── 达成目标：奖牌 ── */
+#qmedal{display:none;position:fixed;inset:0;z-index:324;background:rgba(30,24,16,.45)}
+#qmedal .qm-card{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;background:var(--paper-raised);border-radius:20px;padding:26px 34px 22px;box-shadow:0 18px 60px rgba(0,0,0,.32);animation:qmedal-pop .55s cubic-bezier(.34,1.56,.64,1)}
+@keyframes qmedal-pop{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+#qmedal .qm-title{font-family:var(--serif);font-size:17px;color:var(--ink);margin-top:12px}
+#qmedal .qm-sub{font-size:12px;color:var(--ink-soft);margin-top:5px}
+#qmedal svg .qm-shine{animation:qshine 1.6s ease .3s both}
+@keyframes qshine{from{opacity:0;transform:translateX(-26px)}45%{opacity:.85}to{opacity:0;transform:translateX(26px)}}
+/* ── 读完一本：树的特写 + 花瓣 ── */
+#qfinish{display:none;position:fixed;inset:0;z-index:323;background:rgba(30,24,16,.45)}
+#qfinish .qfin-card{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:min(320px,88vw);text-align:center;background:var(--paper-raised);border-radius:20px;padding:24px 20px 20px;box-shadow:0 18px 60px rgba(0,0,0,.32);animation:qmedal-pop .5s cubic-bezier(.34,1.56,.64,1)}
+#qfinish .qfin-tree svg{width:150px;height:auto}
+#qfinish .qfin-title{font-family:var(--serif);font-size:16px;color:var(--ink);margin-top:8px}
+#qfinish .qfin-sub{font-size:12px;color:var(--ink-soft);margin-top:5px}
+.qf-petal{position:fixed;top:-12px;z-index:325;width:10px;height:7px;border-radius:62% 38% 55% 45%;pointer-events:none;animation:qpetal linear forwards;opacity:.9}
+@keyframes qpetal{to{transform:translate(var(--dx,-30px),108vh) rotate(520deg);opacity:.7}}
+/* ── 盲盒开卷 ── */
+#qblind{display:none;position:fixed;inset:0;z-index:322;background:rgba(30,24,16,.45)}
+#qblind .qb-wrap{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);text-align:center}
+#qblind .qb-box{width:110px;margin:0 auto;transform-origin:50% 88%}
+#qblind.shaking .qb-box{animation:qd-shake .9s ease}
+#qblind .qb-card{width:min(280px,86vw);margin:14px auto 0;background:var(--paper-raised);border-radius:16px;padding:18px 16px;box-shadow:0 14px 44px rgba(0,0,0,.3);opacity:0;transform:translateY(16px)}
+#qblind.revealed .qb-card{animation:qd-pop .5s ease forwards}
+#qblind .qb-t{font-family:var(--serif);font-size:17px;color:var(--ink)}
+#qblind .qb-a{font-size:12px;color:var(--ink-soft);margin-top:4px}
+#qblind .qb-btns{display:flex;gap:10px;justify-content:center;margin-top:14px}
+#qblind .qb-btns button{border:1px solid var(--line-solid);background:var(--paper);color:var(--ink);border-radius:9px;padding:6px 14px;cursor:pointer;font-size:12.5px;font-family:var(--sans)}
+#qblind .qb-btns button.go{background:var(--accent);color:#fff;border-color:transparent}
+#qblind .qb-tip{margin-top:10px;font-size:12px;color:#f4ead6}
+/* ── 播报 RSS 预置源 ── */
+.qp-grp{font-size:11px;color:var(--ink-faint);margin:6px 0 2px}
+.qp-rss-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;font-size:12px;margin-bottom:2px}
+.qp-rss-grid label{display:flex;gap:5px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+@keyframes qf-cele{0%,100%{background:var(--accent)}15%,45%,75%{background:#e8a0b4;transform:scale(1.12)}30%,60%,90%{background:#f2c3d0;transform:scale(1)}}
+#qmem-list table{border-collapse:collapse;width:100%}
+#qmem-list td{border:1px solid var(--line-solid);padding:3px 6px;vertical-align:top}
+#qmem-list td:first-child{width:78px;color:var(--ink-soft)}
+#qmem-list a{color:var(--accent);cursor:pointer;margin-left:6px}
 .quill-quick button{font-family:var(--sans);font-size:12px;color:var(--accent);background:var(--accent-soft);border:none;padding:6px 12px;border-radius:14px;cursor:pointer}
 .quill-quick button:hover{background:var(--accent);color:#fff}
 .quill-msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
@@ -936,7 +1493,24 @@ html.journey-only .journey-page{display:flex!important}
   <div class="boot-name">书房</div>
   <div class="boot-sub">MyLibrary</div>
 </div></div>
+<div class="grove-editor" id="slot-editor">
+  <div class="ge-head"><button class="ge-nav" id="se-prev" onclick="groveNav(-1)" style="visibility:hidden">‹</button><span id="se-title" style="flex:1;text-align:center">编辑</span><button class="ge-nav" id="se-next" onclick="groveNav(1)" style="visibility:hidden">›</button><button class="close" onclick="closeSlotEditor()" style="margin-left:6px">×</button></div>
+  <div id="se-body"></div>
+</div>
+<input type="file" id="ge-file" accept="image/*" style="display:none" onchange="gePickImg(this)">
+<input type="file" id="pal-img" accept="image/*" style="display:none" onchange="extractPaletteFromImage(this)">
+<div class="grove-editor" id="pal-editor" style="z-index:260">
+  <div class="ge-head"><span>色卡编辑</span><button class="close" onclick="closePalEditor()">×</button></div>
+  <div id="pe-body"></div>
+</div>
 <div id="theme-bg"></div>
+<div id="theme-shapes"></div>
+<div id="theme-tex"></div>
+<div id="theme-vign"></div>
+<div id="theme-mist"></div>
+<div id="theme-strip-bottom"></div>
+<div id="side-l"></div>
+<div id="side-r"></div>
 <div id="theme-veil"></div>
 <div id="theme-strip"></div>
 <div class="masthead">
@@ -1052,71 +1626,56 @@ html.journey-only .journey-page{display:flex!important}
         <button class="tt-opt" data-tt="dusk" onclick="pickTimeTheme('dusk')">黄昏</button>
         <button class="tt-opt" data-tt="night" onclick="pickTimeTheme('night')">夜晚</button>
       </div>
-      <div class="theme-sec-label">预设</div>
-      <div class="theme-presets" id="theme-presets"></div>
-      <div class="theme-sec-label">自定义背景</div>
-      <div class="theme-uploads">
-        <div class="theme-up-item">
-          <div class="tu-prev" id="tu-prev-bg" onclick="document.getElementById('tu-file-bg').click()"><span>+ 主背景</span></div>
-          <input type="file" id="tu-file-bg" accept="image/*" style="display:none" onchange="uploadTheme('bg',this)">
-          <div class="tu-label">整页背景<button class="tu-clear" onclick="clearTheme('bg')">清除</button></div>
-        </div>
-        <div class="theme-up-item">
-          <div class="tu-prev wide" id="tu-prev-strip" onclick="document.getElementById('tu-file-strip').click()"><span>+ 插画条</span></div>
-          <input type="file" id="tu-file-strip" accept="image/*" style="display:none" onchange="uploadTheme('strip',this)">
-          <div class="tu-label">顶部插画条<button class="tu-clear" onclick="clearTheme('strip')">清除</button></div>
-        </div>
-        <div class="theme-up-item">
-          <div class="tu-prev" id="tu-prev-corner" onclick="document.getElementById('tu-file-corner').click()"><span>+ 边角</span></div>
-          <input type="file" id="tu-file-corner" accept="image/*" style="display:none" onchange="uploadTheme('corner',this)">
-          <div class="tu-label">四角装饰<button class="tu-clear" onclick="clearTheme('corner')">清除</button></div>
-        </div>
-      </div>
-      <div class="theme-sec-label">背景浓淡（自定义背景太抢眼就调淡一点）</div>
-      <div class="veil-row"><span style="font-size:12px;color:var(--ink-soft)">清晰</span>
-        <input type="range" id="veil-range" min="0" max="95" value="82" oninput="setVeil(this.value)" style="flex:1">
-        <span style="font-size:12px;color:var(--ink-soft)">朦胧</span></div>
-      <div class="theme-sec-label">背景模糊（整张图的模糊程度）</div>
-      <div class="veil-row"><span style="font-size:12px;color:var(--ink-soft)">清晰</span>
-        <input type="range" id="bgblur-range" min="0" max="24" value="0" oninput="setBgBlur(this.value)" style="flex:1">
-        <span style="font-size:12px;color:var(--ink-soft)">模糊</span></div>
-      <div class="theme-sec-label">边缘羽化（背景向四周淡出的范围）</div>
-      <div class="veil-row"><span style="font-size:12px;color:var(--ink-soft)">硬边</span>
-        <input type="range" id="bgfeather-range" min="0" max="60" value="0" oninput="setBgFeather(this.value)" style="flex:1">
-        <span style="font-size:12px;color:var(--ink-soft)">羽化</span></div>
-      <div class="theme-sec-label">裁切缩放（放大可裁得更紧，框住想要的部分）</div>
-      <div class="veil-row"><span style="font-size:12px;color:var(--ink-soft)">原始</span>
-        <input type="range" id="bgzoom-range" min="100" max="250" value="100" oninput="setBgZoom(this.value)" style="flex:1">
-        <span style="font-size:12px;color:var(--ink-soft)">放大</span></div>
-      <div class="theme-sec-label">裁切位置（左右 / 上下移动，选显示哪一块）</div>
-      <div class="veil-row"><span style="font-size:12px;color:var(--ink-soft)">左</span>
-        <input type="range" id="bgposx-range" min="0" max="100" value="50" oninput="setBgPosX(this.value)" style="flex:1">
-        <span style="font-size:12px;color:var(--ink-soft)">右</span></div>
-      <div class="veil-row"><span style="font-size:12px;color:var(--ink-soft)">上</span>
-        <input type="range" id="bgposy-range" min="0" max="100" value="50" oninput="setBgPosY(this.value)" style="flex:1">
-        <span style="font-size:12px;color:var(--ink-soft)">下</span></div>
-      <div class="theme-sec-label">书桌装扮（阅读页正文两侧的装饰图）</div>
-      <div class="theme-uploads">
-        <div class="theme-up-item">
-          <div class="tu-prev" id="tu-prev-desk_left" onclick="document.getElementById('tu-file-desk_left').click()"><span>+ 左侧</span></div>
-          <input type="file" id="tu-file-desk_left" accept="image/*" style="display:none" onchange="uploadTheme('desk_left',this)">
-          <div class="tu-label">左侧书桌<button class="tu-clear" onclick="clearTheme('desk_left')">清除</button></div>
-        </div>
-        <div class="theme-up-item">
-          <div class="tu-prev" id="tu-prev-desk_right" onclick="document.getElementById('tu-file-desk_right').click()"><span>+ 右侧</span></div>
-          <input type="file" id="tu-file-desk_right" accept="image/*" style="display:none" onchange="uploadTheme('desk_right',this)">
-          <div class="tu-label">右侧书桌<button class="tu-clear" onclick="clearTheme('desk_right')">清除</button></div>
-        </div>
-      </div>
-      <div class="theme-sec-label">书脊封面配色</div>
+      <div class="theme-sec-label">背景方案 <a class="tp-link" onclick="toggleSchemeEdit()">编辑</a></div>
+      <div class="scheme-grid" id="scheme-grid"></div>
+      <div class="tu-hint">长按＝删 · <a class="tp-link" onclick="saveCurrentScheme()">＋存当前为方案</a></div>
+      <div class="theme-sec-label">书脊配色 <a class="tp-link" onclick="importPalette()">导入色卡</a> <a class="tp-link" onclick="document.getElementById('pal-img').click()">图片取色</a> <a class="tp-link" onclick="togglePalEdit()">编辑</a></div>
       <div class="cover-palettes" id="cover-palettes"></div>
+      <div class="theme-sec-label">各页背景 · 点方块＝编辑 / 拖图＝上传 / 按住拖＝挪位置</div>
+      <div class="page-maps">
+        <div class="pmap"><div class="pmap-title">书架页</div>
+          <div class="pmap-frame">
+            <div class="tu-prev pm-strip" id="tu-prev-strip" onclick="slotSquareClick('strip')"><span>顶部插画条</span></div>
+            <div class="tu-prev pm-side" id="tu-prev-corner" onclick="slotSquareClick('corner')"><span>左侧</span></div>
+            <div class="tu-prev pm-side pm-sider" id="tu-prev-side_r" onclick="slotSquareClick('side_r')"><span>右侧</span></div>
+            <div class="tu-prev pm-main pm-mid" id="tu-prev-bg" onclick="slotSquareClick('bg')"><span>主背景</span></div>
+            <div class="tu-prev pm-bstrip" id="tu-prev-strip_bottom" onclick="slotSquareClick('strip_bottom')"><span>底部横幅</span></div>
+          </div></div>
+        <div class="pmap"><div class="pmap-title">设置页</div>
+          <div class="pmap-frame"><div class="tu-prev pm-main pm-only" id="tu-prev-settings_bg" onclick="slotSquareClick('settings_bg')"><span>整页背景</span></div></div></div>
+        <div class="pmap"><div class="pmap-title">管理页</div>
+          <div class="pmap-frame"><div class="tu-prev pm-main pm-only" id="tu-prev-admin_bg" onclick="slotSquareClick('admin_bg')"><span>整页背景</span></div></div></div>
+        <div class="pmap"><div class="pmap-title">阅读记录页 <a class="tp-link" onclick="openGroveEditor('default')">默认草地</a> <a class="tp-link" onclick="openGardenAlbum()">草地相册</a></div>
+          <div class="pmap-frame">
+            <div class="tu-prev pm-strip" id="tu-prev-journey_banner" onclick="slotSquareClick('journey_banner')"><span>顶部横幅</span></div>
+            <div class="tu-prev pm-main pm-full" id="tu-prev-journey_bg" onclick="slotSquareClick('journey_bg')"><span>整页背景</span></div>
+          </div></div>
+        <div class="pmap"><div class="pmap-title">阅读页</div>
+          <div class="pmap-frame">
+            <div class="tu-prev pm-deskl" id="tu-prev-desk_left" onclick="slotSquareClick('desk_left')"><span>左书桌</span></div>
+            <div class="pm-dead"><span>正文</span></div>
+            <div class="tu-prev pm-deskr" id="tu-prev-desk_right" onclick="slotSquareClick('desk_right')"><span>右书桌</span></div>
+          </div></div>
+      </div>
+      <input type="file" id="tu-file-bg" accept="image/*" style="display:none" onchange="uploadTheme('bg',this)">
+      <input type="file" id="tu-file-strip" accept="image/*" style="display:none" onchange="uploadTheme('strip',this)">
+      <input type="file" id="tu-file-strip_bottom" accept="image/*" style="display:none" onchange="uploadTheme('strip_bottom',this)">
+      <input type="file" id="tu-file-corner" accept="image/*" style="display:none" onchange="uploadTheme('corner',this)">
+      <input type="file" id="tu-file-side_r" accept="image/*" style="display:none" onchange="uploadTheme('side_r',this)">
+      <input type="file" id="tu-file-desk_left" accept="image/*" style="display:none" onchange="uploadTheme('desk_left',this)">
+      <input type="file" id="tu-file-desk_right" accept="image/*" style="display:none" onchange="uploadTheme('desk_right',this)">
+      <input type="file" id="tu-file-journey_banner" accept="image/*" style="display:none" onchange="uploadTheme('journey_banner',this)">
+      <input type="file" id="tu-file-journey_bg" accept="image/*" style="display:none" onchange="uploadTheme('journey_bg',this)">
+      <input type="file" id="tu-file-settings_bg" accept="image/*" style="display:none" onchange="uploadTheme('settings_bg',this)">
+      <input type="file" id="tu-file-admin_bg" accept="image/*" style="display:none" onchange="uploadTheme('admin_bg',this)">
       <div class="theme-sec-label">界面功能（关掉可获得更简洁的体验）</div>
       <div class="feat-toggles" id="feat-toggles">
         <label class="feat-row"><span>Quill 悬浮入口</span><span class="qs-switch"><input type="checkbox" data-feat="fab" checked onchange="toggleFeat('fab',this.checked)"><span class="qs-slider"></span></span></label>
         <label class="feat-row"><span>阅读花园（总览里的树）</span><span class="qs-switch"><input type="checkbox" data-feat="garden" checked onchange="toggleFeat('garden',this.checked)"><span class="qs-slider"></span></span></label>
         <label class="feat-row"><span>顶部插画条 / 边角装饰</span><span class="qs-switch"><input type="checkbox" data-feat="deco" checked onchange="toggleFeat('deco',this.checked)"><span class="qs-slider"></span></span></label>
       </div>
-      <div class="theme-tip">背景会自动蒙上一层纸色保证文字清晰。想要简约就选「纯净」，什么都不放也很美。</div>
+      <div style="text-align:center;margin:18px 0 4px"><button class="cb-btn" style="padding:9px 22px;font-size:13px" onclick="saveThemeAndReload(this)">保存并刷新</button></div>
+
     </div>
   </div>
 </div>
@@ -1124,6 +1683,8 @@ html.journey-only .journey-page{display:flex!important}
 
 <!-- 阅读历程 -->
 <div class="journey-page" id="journey-page">
+<div id="journey-bg" style="position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;pointer-events:none"></div>
+<div id="journey-banner" style="position:absolute;top:0;left:0;right:0;height:130px;z-index:0;background-size:cover;background-position:center;pointer-events:none;display:none"></div>
   <div class="journey-top">
     <button class="jn-back" onclick="closeJourney()"><svg viewBox="0 0 24 24" class="ic"><path d="M10.8284 12.0007L15.7782 16.9504L14.364 18.3646L8 12.0007L14.364 5.63672L15.7782 7.05093L10.8284 12.0007Z"></path></svg>书房</button>
     <h2>阅读历程 <button class="jn-share-icon" onclick="openJourneyCard()" title="生成分享卡片"><svg viewBox="0 0 24 24"><path d="M13.12 17.023l-4.199-2.29a4 4 0 1 1 0-5.465l4.2-2.29a4 4 0 1 1 .959 1.755l-4.2 2.29a4.008 4.008 0 0 1 0 1.956l4.199 2.29a4 4 0 1 1-.959 1.754z"></path></svg></button></h2>
@@ -1181,8 +1742,118 @@ html.journey-only .journey-page{display:flex!important}
 </div>
 
 <!-- Quill 书库精灵 -->
+<div id="qtarot" onclick="if(event.target.id==='qtarot')closeTarot()">
+  <div class="tt-panel">
+    <span class="tt-x" onclick="closeTarot()">✕</span>
+    <div class="tt-title">Quill · 塔罗</div>
+    <div class="tt-modes">
+      <button data-m="1" class="on" onclick="ttSetMode(1)">单张</button>
+      <button data-m="3" onclick="ttSetMode(3)">三张牌阵</button>
+      <button data-m="5" onclick="ttSetMode(5)">两难抉择</button>
+      <button data-m="10" onclick="ttSetMode(10)">凯尔特十字</button>
+    </div>
+    <div id="tt-zone"><div id="tt-fan"></div></div>
+    <div class="tt-stage">
+<svg class="tt-circle" viewBox="0 0 300 200" aria-hidden="true">
+        <defs><clipPath id="ttmoon0"><circle cx="150.00" cy="8.00" r="5.40"/></clipPath><clipPath id="ttmoon1"><circle cx="220.00" cy="20.33" r="5.40"/></clipPath><clipPath id="ttmoon2"><circle cx="271.24" cy="54.00" r="5.40"/></clipPath><clipPath id="ttmoon3"><circle cx="290.00" cy="100.00" r="5.40"/></clipPath><clipPath id="ttmoon4"><circle cx="271.24" cy="146.00" r="5.40"/></clipPath><clipPath id="ttmoon5"><circle cx="220.00" cy="179.67" r="5.40"/></clipPath><clipPath id="ttmoon6"><circle cx="150.00" cy="192.00" r="5.40"/></clipPath><clipPath id="ttmoon7"><circle cx="80.00" cy="179.67" r="5.40"/></clipPath><clipPath id="ttmoon8"><circle cx="28.76" cy="146.00" r="5.40"/></clipPath><clipPath id="ttmoon9"><circle cx="10.00" cy="100.00" r="5.40"/></clipPath><clipPath id="ttmoon10"><circle cx="28.76" cy="54.00" r="5.40"/></clipPath><clipPath id="ttmoon11"><circle cx="80.00" cy="20.33" r="5.40"/></clipPath></defs>
+        <ellipse cx="150" cy="100" rx="140" ry="92"/>
+        <ellipse cx="150" cy="100" rx="104" ry="68"/>
+        <path d="M150 8 L226 138 L64 62 L236 62 L74 138 Z"/>
+        <circle cx="150" cy="100" r="4"/>
+        <g class="tt-moons">
+          <circle cx="150.00" cy="8.00" r="5.40" class="tt-moon-lit"/><circle cx="150.00" cy="8.00" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon0)"/>
+          <circle cx="220.00" cy="20.33" r="5.40" class="tt-moon-lit"/><circle cx="220.72" cy="20.33" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon1)"/>
+          <circle cx="271.24" cy="54.00" r="5.40" class="tt-moon-lit"/><circle cx="273.94" cy="54.00" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon2)"/>
+          <circle cx="290.00" cy="100.00" r="5.40" class="tt-moon-lit"/><circle cx="295.40" cy="100.00" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon3)"/>
+          <circle cx="271.24" cy="146.00" r="5.40" class="tt-moon-lit"/><circle cx="279.34" cy="146.00" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon4)"/>
+          <circle cx="220.00" cy="179.67" r="5.40" class="tt-moon-lit"/><circle cx="230.08" cy="179.67" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon5)"/>
+          <circle cx="150.00" cy="192.00" r="5.40" class="tt-moon-lit"/><circle cx="160.80" cy="192.00" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon6)"/>
+          <circle cx="80.00" cy="179.67" r="5.40" class="tt-moon-lit"/><circle cx="90.08" cy="179.67" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon7)"/>
+          <circle cx="28.76" cy="146.00" r="5.40" class="tt-moon-lit"/><circle cx="36.86" cy="146.00" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon8)"/>
+          <circle cx="10.00" cy="100.00" r="5.40" class="tt-moon-lit"/><circle cx="15.40" cy="100.00" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon9)"/>
+          <circle cx="28.76" cy="54.00" r="5.40" class="tt-moon-lit"/><circle cx="31.46" cy="54.00" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon10)"/>
+          <circle cx="80.00" cy="20.33" r="5.40" class="tt-moon-lit"/><circle cx="80.72" cy="20.33" r="5.40" class="tt-moon-dark" clip-path="url(#ttmoon11)"/>
+        </g>
+      </svg>
+      <div id="tt-result"></div>
+    </div>
+    <div id="tt-act">
+      <button class="tt-p" onclick="ttSend()">发给 Quill 解读</button>
+      <button onclick="ttAgain()">再抽一次</button>
+    </div>
+  </div>
+</div>
+<div id="qgame" onclick="if(event.target.id==='qgame')this.style.display='none'">
+  <div class="qg-box">
+    <div id="qg-title" style="font-family:var(--serif)">猜拳</div>
+    <div class="qg-hands"><span class="qg-you" id="qg-you">✊</span><span style="font-size:20px;align-self:center;color:var(--ink-faint)">VS</span><span class="qg-me" id="qg-me">✊</span></div>
+    <div class="qg-pick" id="qg-pick"></div>
+    <div class="qg-res" id="qg-res"></div>
+  </div>
+</div>
+<div id="qdraw" onclick="if(event.target.id==='qdraw')this.style.display='none'">
+  <div class="qd-box">
+    <svg class="qd-tube" viewBox="0 0 96 120"><path d="M18 34 L78 34 L72 112 Q48 122 24 112 Z" fill="#8a5a3a"/><ellipse cx="48" cy="34" rx="30" ry="9" fill="#6f4529"/><rect x="40" y="6" width="5" height="30" rx="2.5" fill="#e8d9b8" transform="rotate(-8 42 20)"/><rect x="52" y="4" width="5" height="32" rx="2.5" fill="#e8d9b8" transform="rotate(6 54 20)"/></svg>
+    <div class="qd-stick" id="qd-stick">小吉</div>
+    <div class="qd-tip" id="qd-tip">签筒摇动中…</div>
+  </div>
+</div>
+<div id="qfinish" onclick="if(event.target.id==='qfinish')this.style.display='none'">
+  <div class="qfin-card">
+    <div class="qfin-tree" id="qfin-tree"></div>
+    <div class="qfin-title" id="qfin-title"></div>
+    <div class="qfin-sub" id="qfin-sub"></div>
+  </div>
+</div>
+<div id="qblind" onclick="if(event.target.id==='qblind')this.style.display='none'">
+  <div class="qb-wrap">
+    <svg class="qb-box" viewBox="0 0 110 96"><rect x="17" y="30" width="76" height="56" rx="7" fill="#a8785a"/><rect x="17" y="30" width="76" height="14" rx="7" fill="#8a5a3a"/><rect x="49" y="30" width="12" height="56" fill="#e8d9b8"/><rect x="14" y="24" width="82" height="12" rx="6" fill="#8a5a3a"/><path d="M55 24 C 47 10 33 12 36 20 C 38 26 48 26 55 24 Z" fill="#e8d9b8"/><path d="M55 24 C 63 10 77 12 74 20 C 72 26 62 26 55 24 Z" fill="#e8d9b8"/><circle cx="55" cy="24" r="4" fill="#d8bd8f"/><text x="55" y="70" text-anchor="middle" font-size="18" fill="#f0e3cc" font-family="serif">？</text></svg>
+    <div class="qb-card" id="qb-card">
+      <div class="qb-t" id="qb-t"></div>
+      <div class="qb-a" id="qb-a"></div>
+      <div class="qb-btns"><button onclick="quillBlind(true)">再摇一次</button><button class="go" id="qb-go">翻开第一章</button></div>
+    </div>
+    <div class="qb-tip" id="qb-tip">盲盒摇晃中…</div>
+  </div>
+</div>
+<div id="qterm" onclick="qtClose()">
+  <div class="qt-card" onclick="event.stopPropagation()">
+    <span class="qt-x" onclick="qtClose()">✕</span>
+    <div class="qt-art" id="qt-art"></div>
+    <div class="qt-body">
+      <div class="qt-name" id="qt-name"></div>
+      <div class="qt-side">
+        <div class="qt-phrase" id="qt-phrase"></div>
+        <div class="qt-meta" id="qt-meta"></div>
+        <div class="qt-fest" id="qt-fest"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="qcal" onclick="if(event.target.id==='qcal')qcalClose()">
+  <div class="qcal-panel">
+    <span class="qcal-x" onclick="qcalClose()">✕</span>
+    <div class="qcal-head">
+      <a class="qcal-nav" onclick="qcalNav(-1)">‹</a>
+      <b id="qcal-ym"></b>
+      <a class="qcal-nav" onclick="qcalNav(1)">›</a>
+      <label class="qcal-wk"><input type="checkbox" onchange="qcalToggleWeek(this.checked)"> 周视图</label>
+    </div>
+    <div id="qcal-grid"></div>
+    <div id="qcal-detail"></div>
+  </div>
+</div>
+
+<div id="qmedal" onclick="if(event.target.id==='qmedal')this.style.display='none'">
+  <div class="qm-card">
+    <svg width="92" height="112" viewBox="0 0 92 112"><defs><clipPath id="qm-clip"><circle cx="46" cy="66" r="27"/></clipPath></defs><path d="M30 4 L46 40 L62 4 Z" fill="#b3563f"/><path d="M18 4 L40 44 L52 44 L30 4 Z" fill="#c9714f"/><path d="M74 4 L52 44 L40 44 L62 4 Z" fill="#a34a36"/><circle cx="46" cy="66" r="30" fill="#e3bc63"/><circle cx="46" cy="66" r="27" fill="#f0d287"/><circle cx="46" cy="66" r="21" fill="none" stroke="#c9a24a" stroke-width="1.6"/><path d="M46 53 L50.2 61.6 L59.7 62.9 L52.8 69.5 L54.5 78.9 L46 74.4 L37.5 78.9 L39.2 69.5 L32.3 62.9 L41.8 61.6 Z" fill="#b98a2e"/><g clip-path="url(#qm-clip)"><rect class="qm-shine" x="30" y="34" width="14" height="66" fill="#fff" opacity=".5" transform="rotate(18 46 66)"/></g></svg>
+    <div class="qm-title" id="qm-title"></div>
+    <div class="qm-sub" id="qm-sub"></div>
+  </div>
+</div>
 <button class="quill-fab" id="quill-fab" onclick="quillFabClick()" title="Quill">
-  <svg viewBox="0 0 24 24" class="ic"><path d="M21 1.99669C6 1.99669 4 15.9967 3 21.9967C3.66667 21.9967 4.33275 21.9967 4.99824 21.9967C5.66421 18.6636 7.33146 16.8303 10 16.4967C14 15.9967 17 12.4967 18 9.49669L16.5 8.49669C16.8333 8.16336 17.1667 7.83002 17.5 7.49669C18.5 6.49669 19.5042 4.99669 21 1.99669Z"></path></svg>
+  <span class="qf-av"><svg viewBox="0 0 24 24" class="ic"><path d="M21 1.99669C6 1.99669 4 15.9967 3 21.9967C3.66667 21.9967 4.33275 21.9967 4.99824 21.9967C5.66421 18.6636 7.33146 16.8303 10 16.4967C14 15.9967 17 12.4967 18 9.49669L16.5 8.49669C16.8333 8.16336 17.1667 7.83002 17.5 7.49669C18.5 6.49669 19.5042 4.99669 21 1.99669Z"></path></svg></span>
 </button>
 <div class="quill-panel" id="quill-panel">
   <div class="quill-head">
@@ -1202,6 +1873,7 @@ html.journey-only .journey-page{display:flex!important}
     <div class="qsess-list" id="qsess-list"></div>
   </div>
   <div class="quill-settings" id="quill-settings">
+    <div class="qs-top"><b>设定</b><span class="qs-top-x" onclick="toggleQuillSettings()">收起 ✕</span></div>
     <div class="qs-row"><span>性情</span>
       <select id="quill-tone" onchange="saveQuillCfg()">
         <option value="auto">随读养成（推荐）</option>
@@ -1217,24 +1889,88 @@ html.journey-only .journey-page{display:flex!important}
     <div class="qs-row"><span>显示悬浮入口</span>
       <label class="qs-switch"><input type="checkbox" id="quill-show-fab" checked onchange="toggleQuillFab(this.checked)"><span class="qs-slider"></span></label>
     </div>
-    <div class="qs-hint" style="margin-top:0">关掉后右下角浮钮会隐藏，可在设置页重新打开。浮钮可长按拖动换位置。</div>
-    <div class="qs-persona"><span>补充设定（可选，只影响口吻习惯，Quill 始终是 Quill）</span>
+    <div class="qs-row"><span>节气/节日悬浮换装</span>
+      <label class="qs-switch"><input type="checkbox" id="qf-season-sw" checked onchange="toggleSeasonBadge(this.checked)"><span class="qs-slider"></span></label>
+    </div>
+    <div class="qs-hint" style="margin:0 0 8px">鼠标停到 Quill 上会晃一晃、换成当天的节气或节日插画，顺便报连续阅读天数</div>
+    <div class="qs-row"><span>读完撒花庆祝</span>
+      <label class="qs-switch"><input type="checkbox" id="qf-finish-sw" checked onchange="toggleFinishCele(this.checked)"><span class="qs-slider"></span></label>
+    </div>
+    <div class="qs-persona"><span>表情包（Quill 会在合适时机发）</span> <a class="tp-link" onclick="openStkImport()">批量导入</a> <a class="tp-link" onclick="document.getElementById('q-stk-file').click()">＋上传</a></div>
+    <input type="file" id="q-stk-file" accept="image/*" style="display:none" onchange="uploadQuillSticker(this)">
+    <div class="q-stkrow" id="q-stk-row"></div>
+    <div id="stk-import" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.35)">
+      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,92vw);background:var(--paper);border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.25)">
+        <div style="font-weight:600;margin-bottom:8px">批量导入表情</div>
+        <textarea id="stk-imp-ta" style="width:100%;height:160px;border:1px solid var(--line-solid);border-radius:10px;padding:8px;background:#fff;color:var(--ink);font-size:12px" placeholder="小狗：https://…&#10;https://… 猫猫&#10;https://…"></textarea>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
+          <button class="cb-btn" onclick="document.getElementById('stk-import').style.display='none'">取消</button>
+          <button class="cb-btn" id="stk-imp-go" onclick="runStkImport(this)">开始导入</button>
+        </div>
+      </div>
+    </div>
+    <div class="qs-persona"><span>每日播报（到点自动开一个当日对话推送）</span></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;margin-bottom:6px">
+      <input type="time" id="qp-time" style="border:1px solid var(--line-solid);border-radius:8px;padding:4px 6px;background:var(--paper);color:var(--ink)" onchange="qpSave()">
+      <input id="qp-city" placeholder="城市（天气用）" style="width:104px;border:1px solid var(--line-solid);border-radius:8px;padding:4px 6px;background:var(--paper);color:var(--ink)" onchange="qpSave()">
+    </div>
+    <div id="qp-subs" style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin-bottom:6px">
+      <label><input type="checkbox" data-sub="weather" onchange="qpSave()"> 天气</label>
+      <label><input type="checkbox" data-sub="fortune" onchange="qpSave()"> 运势·宜忌</label>
+      <label><input type="checkbox" data-sub="draw" onchange="qpSave()"> 每日一签</label>
+      <label><input type="checkbox" data-sub="tarot" onchange="qpSave()"> 每日塔罗</label>
+      <label><input type="checkbox" data-sub="english" onchange="qpSave()"> 英文美文</label>
+      <label><input type="checkbox" data-sub="poem" onchange="qpSave()"> 每日古诗</label>
+      <label><input type="checkbox" data-sub="history" onchange="qpSave()"> 历史上的今天</label>
+      <label><input type="checkbox" data-sub="news" onchange="qpSave()"> 新闻订阅</label>
+    </div>
+    <div class="qs-hint" style="margin:0 0 6px">不填时间＝默认 08:00；到点没发成功（额度 / 网络）会每 15 分钟自动重试，成功为止。</div>
+    <details id="qp-rss-det" style="margin-bottom:6px"><summary style="font-size:12px;cursor:pointer;color:var(--ink-soft)">预置新闻源（勾选即订阅 · 部分源在部分网络环境可能连不上，播报会自动跳过）</summary>
+      <div id="qp-rss-pre"></div>
+    </details>
+    <textarea id="qp-rss" placeholder="自定义 RSS 源（一行一个）&#10;https://feeds.bbci.co.uk/zhongwen/simp/rss.xml" style="width:100%;height:44px;border:1px solid var(--line-solid);border-radius:8px;padding:6px;background:var(--paper);color:var(--ink);font-size:11px;margin-bottom:6px" onchange="qpSave()"></textarea>
+    <textarea id="qp-note" placeholder="自定义抓取备注（如：英超昨晚比分、A股三大指数收盘）" style="width:100%;height:38px;border:1px solid var(--line-solid);border-radius:8px;padding:6px;background:var(--paper);color:var(--ink);font-size:11px;margin-bottom:12px" onchange="qpSave()"></textarea>
+    <div class="qs-persona"><span>待办（对 Quill 说"提醒我…"即可记入）</span> <a class="tp-link" onclick="qcalOpen()">📅 日历</a></div>
+    <div id="qtodo-list" style="font-size:12px;margin-bottom:12px"></div>
+    <div class="qs-persona"><span>习惯打卡（每天到点提醒 · 连续达标得奖牌）</span> <a class="tp-link" onclick="qhabitAdd()">＋新增</a></div>
+    <div id="qhabit-list" style="font-size:12px;margin-bottom:12px"></div>
+    <div class="qs-persona"><span>记忆（自动记下重要信息，可改可删）</span> <a class="tp-link" onclick="qmemAdd()">＋新增</a></div>
+    <div id="qmem-list" style="font-size:12px;margin-bottom:8px"></div>
+    <div class="qs-persona"><span>补充设定</span>
       <textarea id="quill-persona" placeholder="例如：喜欢在句末加'呀'；偶尔引用诗词…" oninput="saveQuillCfg()"></textarea>
     </div>
   </div>
-  <div class="quill-quick" id="quill-quick">
+  <div class="quill-quick folded" id="quill-quick">
+    <button onclick="quillDraw()" style="background:#f2c3d0;color:#7a3a52">每日一签</button>
+    <button onclick="qGame('rps')" style="background:#cfe3f5;color:#2c567c">猜拳</button>
+    <button onclick="qGame('dice')" style="background:#f5e6c8;color:#7a5a20">掷骰子</button>
+    <button onclick="quillBlind()" style="background:#ddd4ef;color:#4d3f78">盲盒开卷</button>
+    <button onclick="openTarot()" style="background:#e6d6ef;color:#5a3f78">塔罗抽牌</button>
     <button onclick="quillQuick('overview')">书库概览</button>
     <button onclick="quillFill('我的书库里有哪些完结的')">查完结的书</button>
     <button onclick="quillFill('根据我在读和收藏的书，推荐几本可能喜欢的')">推荐给我</button>
+    <button onclick="quillFill('找出和《》相似的书')">找相似</button>
+    <button onclick="quillFill('这位作者的书我这里有哪些：')">找同作者</button>
+    <button onclick="quillFill('按标签帮我找书，标签是')">按标签找</button>
+    <button onclick="quillFill('随机给我开一本没读过的')">随机一本</button>
+    <button onclick="quillFill('这个月我读了什么，读了多久')">本月小结</button>
+    <button onclick="quillFill('帮我排八字并解读（生日 年-月-日 时:分，性别 ）')">排我的八字</button>
+    <button onclick="quillFill('排我的紫微基础盘并解读（生日 年-月-日 时:分，性别 ）')">紫微盘</button>
+    <button onclick="quillFill('看看今天的黄历宜忌')">今日黄历</button>
+    <button onclick="quillFill('看看我现在的大运和今年、这个月、今天的运势')">我的运势</button>
+    <button onclick="quillFill('查一下今天的天气（我在 ）')">今天天气</button>
     <button onclick="quillFill('帮我把这几本标记为想读：')">整理书架</button>
     <button onclick="quillFill('帮我理一下这段里的人物关系：')">理清人物</button>
     <button onclick="quillFill('帮我把这段话润色成一条读书笔记：')">写读书笔记</button>
     <button onclick="quillFill('帮我总结这一章的主要情节：')">总结这章</button>
     <button onclick="quillFill('读25分钟提醒我休息一下')">阅读计时</button>
+    <span class="qq-more" onclick="const q=document.getElementById('quill-quick');q.classList.toggle('folded');this.textContent=q.classList.contains('folded')?'更多 ▾':'收起 ▴'">更多 ▾</span>
   </div>
   <div class="quill-msgs" id="quill-msgs"></div>
   <div class="quill-input">
-    <input id="quill-text" placeholder="问 Quill：比如 priest 有几本…" onkeydown="if(event.key==='Enter')quillSend()">
+    <button type="button" title="发图给 Quill（识图）" style="background:transparent;border:1px solid var(--line-solid);width:38px" onclick="document.getElementById('q-img-file').click()"><svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:var(--ink-soft);stroke-width:1.6"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/></svg></button>
+      <input type="file" id="q-img-file" accept="image/*" style="display:none" onchange="qPickImg(this)">
+      <span id="q-img-chip"></span><input id="quill-text" placeholder="问 Quill：比如 priest 有几本…" onkeydown="if(event.key==='Enter')quillSend()">
     <button onclick="quillSend()"><svg viewBox="0 0 24 24" class="ic"><path d="M1.94607 9.31543C1.42353 9.14125 1.4194 8.86022 1.95682 8.68108L21.043 2.31901C21.5715 2.14285 21.8746 2.43866 21.7265 2.95694L16.2733 22.0432C16.1223 22.5716 15.8177 22.59 15.5944 22.0876L11.9999 14L17.9999 6.00005L9.99992 12L1.94607 9.31543Z"></path></svg></button>
   </div>
 </div>

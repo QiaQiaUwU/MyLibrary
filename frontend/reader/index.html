@@ -79,7 +79,7 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);height:100
 .page-shadow{position:absolute;inset:0;pointer-events:none;opacity:0;
   background:linear-gradient(to left,rgba(0,0,0,.18),transparent 22%);transition:opacity .1s}
 /* 纸张纹理叠加 */
-.texture-overlay{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0.7;background-image:var(--texture);background-repeat:repeat;mix-blend-mode:multiply}
+.texture-overlay{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:var(--texture-op,0.7);background-image:var(--texture);background-repeat:repeat;mix-blend-mode:multiply;transition:opacity .25s}
 .page-num{position:absolute;bottom:22px;left:0;right:0;text-align:center;font-size:12px;color:var(--ink2);z-index:3}
 
 /* ── 翻页按钮区（左右点击）── 设为不拦截：翻页/呼出工具栏改由点击位置判断，
@@ -106,7 +106,7 @@ body.ui-on .fab-menu{opacity:0;pointer-events:none;transform:scale(.6)}
 body:has(.quill-fab:not(.hidden)) .fab-menu{bottom:86px}
 
 /* ── 设置面板 ── */
-.panel{position:fixed;bottom:0;left:0;right:0;background:var(--ui-bg);border-top:1px solid var(--ui-border);
+.panel{user-select:none;position:fixed;bottom:0;left:0;right:0;background:var(--ui-bg);border-top:1px solid var(--ui-border);
   z-index:60;transform:translateY(100%);transition:transform .3s;max-height:75vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:18px 20px 30px}
 .panel.show{transform:translateY(0)}
 .panel h3{font-size:15px;margin-bottom:14px;color:var(--ui-text);display:flex;justify-content:space-between;align-items:center}
@@ -315,7 +315,7 @@ body:has(.quill-fab:not(.hidden)) .fab-menu{bottom:86px}
 .overlay.show{display:block}
 
 /* 白噪音浮窗 */
-.ambient-panel{position:fixed;bottom:60px;right:16px;background:var(--ui-bg);border:1px solid var(--ui-border);border-radius:14px;padding:14px;z-index:65;width:250px;max-width:calc(100vw - 24px);max-height:calc(100vh - 96px);overflow-y:auto;display:none;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.ambient-panel{user-select:none;position:fixed;bottom:60px;right:16px;background:var(--ui-bg);border:1px solid var(--ui-border);border-radius:14px;padding:14px;z-index:65;width:300px;max-width:calc(100vw - 24px);max-height:calc(100vh - 96px);overflow-y:auto;display:none;box-shadow:0 4px 20px rgba(0,0,0,.2)}
 .model-switch{position:fixed;right:22px;bottom:86px;width:240px;max-width:calc(100vw - 24px);background:var(--ui-bg);border:1px solid var(--ui-border);border-radius:14px;padding:10px;z-index:75;display:none;box-shadow:0 6px 24px rgba(0,0,0,.28)}
 .model-switch.show{display:block}
 .model-switch .ms-head{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ui-text);margin:2px 4px 8px}
@@ -341,17 +341,57 @@ body:has(.quill-fab:not(.hidden)) .fab-menu{bottom:86px}
 .amb-btn.on{border-color:var(--accent);background:var(--accent);color:#fff}
 .amb-vol{flex:0 0 96px;accent-color:var(--accent)}
 .amb-vol:disabled{opacity:.3}
-/* 音效细调：只在播放中的音效下展开；带标签三行（快慢/远近/空间），排版清爽 */
+/* 音效细调：播放归播放、展开归展开——▾ 随时折叠细调，播放中的行始终有小均衡条在跳 */
 .amb-detail{display:flex;flex-direction:column;gap:5px;max-height:0;opacity:0;overflow:hidden;padding:0 2px;transition:max-height .24s ease,opacity .2s ease,margin .24s ease}
-.amb-wrap.playing .amb-detail{max-height:120px;opacity:1;margin-top:7px}
+.amb-wrap.open .amb-detail{max-height:120px;opacity:1;margin-top:7px}
+.amb-eq{display:none;align-items:flex-end;gap:2px;height:12px;flex:none}
+.amb-wrap.playing .amb-eq{display:inline-flex}
+.amb-eq i{width:3px;background:var(--accent);border-radius:1.5px;transform-origin:bottom;animation:ambeq 1.05s ease-in-out infinite}
+.amb-eq i:nth-child(1){height:7px}.amb-eq i:nth-child(2){height:12px;animation-delay:.22s}.amb-eq i:nth-child(3){height:9px;animation-delay:.46s}
+@keyframes ambeq{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+.amb-fold{border:none;background:transparent;color:var(--ink2);opacity:.6;cursor:pointer;font-size:12px;padding:4px 6px;flex:none;transition:transform .22s ease}
+.amb-fold:hover{opacity:1}
+.amb-wrap.open .amb-fold{transform:rotate(180deg)}
 .amb-drow{display:flex;align-items:center;gap:9px}
 .amb-dlbl{font-size:11px;color:var(--ink2);flex:0 0 30px}
 .amb-rate,.amb-muffle,.amb-reverb{flex:1;min-width:0}
 .amb-rate{accent-color:#b08968}
 .amb-muffle{accent-color:#7a93a8}
 .amb-reverb{accent-color:#8a9a6a}
+.amb-toolrow{display:flex;align-items:center;gap:8px;margin:2px 0 8px}
+.amb-toollbl{font-size:11px;color:var(--ink-faint);margin-right:auto}
+.amb-mini{white-space:nowrap;font-size:11px;padding:3px 10px;border:1px solid var(--line-solid);border-radius:8px;background:transparent;color:var(--ink-soft);cursor:pointer}
+.amb-ghead{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);margin:10px 0 6px;cursor:pointer;user-select:none}
+.amb-ghead .amb-gn{font-size:11px;color:var(--ink-faint)}
+.amb-ghead .amb-gops{margin-left:auto;display:flex;gap:10px}
+.amb-ghead .amb-gops a{font-size:11px;color:var(--accent);cursor:pointer}
+.amb-ghead.amb-loose{cursor:default}
+.amb-gbody{margin-bottom:4px}
+.amb-grip{cursor:grab;color:var(--ink-faint);padding:0 4px;touch-action:none;user-select:none}
+.amb-wrap.dragging{opacity:.5}
+.amb-rename{font-size:11px;color:var(--accent);cursor:pointer;padding:0 2px}
+.amb-gsel{font-size:11px;padding:2px 3px;border:1px solid var(--line-solid);border-radius:6px;background:var(--paper);color:var(--ink);width:64px;flex:0 0 auto}
+.amb-updown{display:flex;flex-direction:column;gap:1px}
+.amb-updown button{width:16px;height:12px;line-height:9px;font-size:9px;padding:0;border:1px solid var(--line-solid);border-radius:4px;background:transparent;color:var(--ink-soft);cursor:pointer}
+.ambient-panel.editing .amb-vol{display:none}
+.ambient-panel.editing .amb-btn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.drop-hint{outline:2px dashed var(--accent);outline-offset:2px;border-radius:8px}
 .amb-stopall{margin-top:4px;width:100%;padding:7px;border:1px solid var(--ui-border);border-radius:8px;background:transparent;color:var(--ui-text);font-size:12px;cursor:pointer}
 .amb-stopall:hover{border-color:var(--accent);color:var(--accent)}
+.amb-presets{margin-bottom:10px}
+.amb-plabel{font-family:var(--sans);font-size:11px;color:var(--ui-text);opacity:.65;margin:2px 0 6px}
+.amb-prow{display:flex;flex-wrap:wrap;gap:6px}
+.amb-pchip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--ui-border);border-radius:14px;background:transparent;color:var(--ui-text);font-size:12px;cursor:pointer;max-width:100%;white-space:nowrap}
+.amb-pchip:hover{border-color:var(--accent);color:var(--accent)}
+.apc-del{border:none;background:transparent;color:inherit;opacity:.55;font-size:13px;line-height:1;cursor:pointer;padding:0 1px}
+.apc-del:hover{opacity:1}
+.amb-psave{padding:4px 9px;border:1px dashed var(--ui-border);border-radius:14px;background:transparent;color:var(--ui-text);opacity:.8;font-size:12px;cursor:pointer}
+.amb-psave:hover{border-color:var(--accent);color:var(--accent);opacity:1;border-style:solid}
+.amb-upbar{margin-bottom:10px}
+.amb-upbtn{width:100%;padding:7px;border:1px dashed var(--ui-border);border-radius:8px;background:transparent;color:var(--ui-text);opacity:.85;font-size:12px;cursor:pointer}
+.amb-upbtn:hover{border-color:var(--accent);color:var(--accent);opacity:1;border-style:solid}
+.amb-del{border:none;background:transparent;color:var(--ui-text);opacity:.4;font-size:15px;line-height:1;cursor:pointer;padding:0 2px;flex:0 0 auto}
+.amb-del:hover{opacity:1;color:#c0392b}
 .music-links{margin-top:10px;padding-top:10px;border-top:1px solid var(--ui-border);display:flex;gap:8px}
 .music-links a{flex:1;text-align:center;padding:7px;border-radius:7px;background:var(--paper);border:1px solid var(--ui-border);color:var(--accent);font-size:12px;text-decoration:none}
 
@@ -500,28 +540,36 @@ try{if(window.opener&&!window.opener.closed)document.documentElement.classList.a
   </div>
   <div class="panel-section">
     <div class="panel-label">行距</div>
-    <div class="opt-row">
-      <button class="opt" onclick="setLineHeight(1.6,this)">紧凑</button>
-      <button class="opt sel" onclick="setLineHeight(2.0,this)">标准</button>
-      <button class="opt" onclick="setLineHeight(2.4,this)">宽松</button>
+    <div class="opt-row" id="lineheight-row">
+      <button class="opt" data-v="1.6" onclick="setLineHeight(1.6,this)">紧凑</button>
+      <button class="opt sel" data-v="2" onclick="setLineHeight(2.0,this)">标准</button>
+      <button class="opt" data-v="2.4" onclick="setLineHeight(2.4,this)">宽松</button>
     </div>
   </div>
   <div class="panel-section">
     <div class="panel-label">字体</div>
     <div class="opt-row" id="font-row">
-      <button class="opt sel" onclick="setFont('serif',this)">宋体</button>
-      <button class="opt" onclick="setFont('kai',this)">楷体</button>
-      <button class="opt" onclick="setFont('hei',this)">黑体</button>
-      <button class="opt" onclick="setFont('fangsong',this)">仿宋</button>
+      <button class="opt sel" data-v="serif" onclick="setFont('serif',this)">宋体</button>
+      <button class="opt" data-v="kai" onclick="setFont('kai',this)">楷体</button>
+      <button class="opt" data-v="hei" onclick="setFont('hei',this)">黑体</button>
+      <button class="opt" data-v="fangsong" onclick="setFont('fangsong',this)">仿宋</button>
     </div>
   </div>
   <div class="panel-section">
     <div class="panel-label">背景纹理</div>
     <div class="opt-row" id="texture-row">
-      <button class="opt sel" onclick="setTexture('none',this)">无</button>
-      <button class="opt" onclick="setTexture('paper',this)">纸纹</button>
-      <button class="opt" onclick="setTexture('linen',this)">布纹</button>
-      <button class="opt" onclick="setTexture('grain',this)">颗粒</button>
+      <button class="opt sel" data-v="none" onclick="setTexture('none',this)">无</button>
+      <button class="opt" data-v="paper" onclick="setTexture('paper',this)">纸纹</button>
+      <button class="opt" data-v="linen" onclick="setTexture('linen',this)">布纹</button>
+      <button class="opt" data-v="twill" onclick="setTexture('twill',this)">斜纹</button>
+      <button class="opt" data-v="canvas" onclick="setTexture('canvas',this)">帆布</button>
+      <button class="opt" data-v="grain" onclick="setTexture('grain',this)">颗粒</button>
+      <button class="opt" data-v="dots" onclick="setTexture('dots',this)">细点</button>
+    </div>
+    <div class="opt-row" style="margin-top:8px;align-items:center;gap:8px">
+      <span style="font-size:12px;opacity:.65">淡</span>
+      <input type="range" id="texop-slider" min="10" max="100" value="70" oninput="setTextureOp(this.value)" style="flex:1">
+      <span style="font-size:12px;opacity:.65">浓</span>
     </div>
   </div>
   <div class="panel-section">
@@ -546,12 +594,17 @@ try{if(window.opener&&!window.opener.closed)document.documentElement.classList.a
 
 <!-- 声音浮窗 -->
 <div class="ambient-panel" id="ambient-panel">
-  <div class="amb-head" id="amb-head"><span>环境音</span><button class="amb-mute" onclick="stopAllAmbient()" title="关掉所有声音">静音</button><span class="amb-close" onclick="toggleAmbient()">×</span></div>
+  <div class="amb-head" id="amb-head"><span>声音</span><button class="amb-mute" onclick="stopAllAmbient()" title="关掉所有声音">静音</button><span class="amb-close" onclick="toggleAmbient()">×</span></div>
   <div class="amb-tip">点名字播放/停止，右侧滑块单独调音量 · 顶栏可拖动</div>
+  <div class="amb-upbar">
+    <button class="amb-upbtn" onclick="document.getElementById('amb-file').click()">＋ 上传声音</button>
+    <input type="file" id="amb-file" accept="audio/*,.mp3,.ogg,.wav,.m4a,.flac" style="display:none" onchange="uploadAmbient(this)">
+  </div>
+  <div class="amb-presets" id="amb-presets"></div>
   <div class="ambient-grid" id="ambient-grid"></div>
   <div class="music-links">
-    <a href="https://music.163.com" target="_blank">网易云</a>
-    <a href="https://y.qq.com" target="_blank">QQ音乐</a>
+    <a href="https://music.163.com" target="_blank" rel="noopener" onclick="event.preventDefault();window.open(this.href,'_blank','noopener');return false;">网易云</a>
+    <a href="https://y.qq.com" target="_blank" rel="noopener" onclick="event.preventDefault();window.open(this.href,'_blank','noopener');return false;">QQ音乐</a>
   </div>
 </div>
 

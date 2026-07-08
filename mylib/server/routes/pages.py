@@ -9,6 +9,12 @@ from frontend_loader import (INJECT_SCRIPT, ADMIN_HTML, READER_JS, READER_HTML,
                              SETTINGS_HTML, HOME_HTML, HOME_JS,
                              live_home_html, live_home_js, live_reader_html,
                              live_reader_js, live_admin_html, live_settings_html)
+
+# 心跳脚本：拼进每个页面，浏览器全关 90s 后服务端看门狗自动退出（见 settings.py）
+_HB_SNIP = """<script>(function(){try{var hb=function(){fetch('/api/heartbeat').catch(function(){});};hb();setInterval(hb,20000);document.addEventListener('visibilitychange',function(){if(!document.hidden)hb();});}catch(e){}})();</script>"""
+def _with_hb(html):
+    return html.replace('</body>', _HB_SNIP + '</body>') if '</body>' in html else (html + _HB_SNIP)
+
 from _state import _HTML_CACHE
 import time as _time
 # 每次启动都不同的资源版本号，用于给 reader.js 等加 ?v=，强制客户端取最新（破缓存）
@@ -18,7 +24,7 @@ ASSET_VER = str(int(_time.time()))
 async def index():
     # 新版书房主页（实时读盘，覆盖代码刷新即生效）
     from fastapi.responses import HTMLResponse as _HTML
-    html = live_home_html()
+    html = _with_hb(live_home_html())
     try:
         html = html.replace('/static/home.js', '/static/home.js?v=' + ASSET_VER)
     except Exception:
@@ -160,7 +166,7 @@ async def reader_page():
     """在线阅读器页面（实时读盘）。注入每次启动都变的版本号给 reader.js，并禁缓存——
     彻底解决"改了阅读器代码、但桌面端/Service Worker 还在用旧 reader.js"导致改了没效果的问题。"""
     from fastapi.responses import HTMLResponse as _HTML
-    html = live_reader_html()
+    html = _with_hb(live_reader_html())
     try:
         html = html.replace('/static/reader.js', '/static/reader.js?v=' + ASSET_VER)
     except Exception:
@@ -187,10 +193,10 @@ async def pageflip_lib():
 
 @app.get('/settings', response_class=HTMLResponse)
 async def settings_page():
-    return live_settings_html()
+    return _with_hb(live_settings_html())
 
 # ── 原有 API（完全兼容旧版前端）──────────────────────────────────────────────
 
 @app.get('/admin', response_class=HTMLResponse)
 async def admin_page():
-    return live_admin_html()
+    return _with_hb(live_admin_html())

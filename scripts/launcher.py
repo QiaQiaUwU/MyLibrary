@@ -275,22 +275,7 @@ def main():
     print(f'  浏览器会自动打开。关闭此窗口停止服务。')
     print()
 
-    # 心跳自动退出：网页每 ~20s ping 一次 /api/heartbeat；看门狗发现超过宽限期没人 ping
-    # （= 浏览器全关了）就自己退出进程、释放端口。这样关掉浏览器后不用再去任务管理器杀进程。
-    import time as _time
-    _HB = {'t': _time.time() + 60}   # 启动给 60s 宽限，等浏览器打开并连上
-    @srv.app.get('/api/heartbeat')
-    def _heartbeat():
-        _HB['t'] = _time.time()
-        return {'ok': True}
-    def _watchdog():
-        # 宽限 90s：手机锁屏/切后台时浏览器把定时器降频到约 1 分钟一次，90s 足够不误杀；网页真关掉则彻底没心跳
-        while True:
-            _time.sleep(10)
-            if _time.time() - _HB['t'] > 90:
-                print('\n  浏览器已全部关闭，MyLibrary 自动退出。')
-                os._exit(0)
-    threading.Thread(target=_watchdog, daemon=True).start()
+    # 心跳自动退出已并入服务端核心（mylib/server/routes/settings.py），任何启动方式都生效。
 
     # 开浏览器
     threading.Timer(1.2, lambda: webbrowser.open(f'http://127.0.0.1:{port}/')).start()

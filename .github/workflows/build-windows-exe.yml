@@ -1,18 +1,18 @@
-name: Build Windows EXE & Release
+name: Build Windows EXE
 
-# 两种触发方式：
-#   1. push 一个 vX.Y.Z 格式的 tag → 自动打包并创建 GitHub Release（附 exe）
-#   2. 仓库 Actions 页手动点 "Run workflow" → 只打包，不发 Release
+# 手动触发：在仓库网页 Actions 里点 "Run workflow" 就会在 GitHub 的 Windows 机器上打包（只产出可下载的构建产物，不会发布）。
+# 推 v 开头的 tag 触发：额外自动创建一个 GitHub Release，把打好的 exe 直接挂上去，不用再手动下载、手动建 Release、手动传文件。
 on:
+  workflow_dispatch:
   push:
     tags:
-      - 'v*.*.*'
-  workflow_dispatch:
+      - 'v*'
 
 jobs:
   build:
     runs-on: windows-latest
-
+    permissions:
+      contents: write   # 打 tag 触发时要创建 Release、上传文件，需要这个写权限
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,30 +30,17 @@ jobs:
       - name: Build standalone exe
         run: pyinstaller --clean --noconfirm MyLibrary.spec
 
-      # 手动触发时：只上传为 artifact（不发 Release）
-      - name: Upload exe as artifact (manual run only)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Upload exe artifact
         uses: actions/upload-artifact@v4
         with:
           name: MyLibrary-windows-exe
           path: dist/MyLibrary.exe
           if-no-files-found: error
 
-      # tag 触发时：创建 GitHub Release 并把 exe 附上
-      - name: Create GitHub Release with exe
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true          # 先作为草稿，你在 GitHub 网页确认后手动发布
-          name: "MyLibrary ${{ github.ref_name }}"
-          body: |
-            ## MyLibrary ${{ github.ref_name }}
-
-            **Windows 免安装版**：下载下方的 `MyLibrary.exe`，双击即用。
-            首次运行会在 exe 同目录自动建好空书库并打开浏览器，无需安装 Python。
-            Windows 可能提示「未知发行者」，点「更多信息 → 仍要运行」即可。
-
-            > 详细更新内容见仓库 `docs/更新日志.md`。
-          files: dist/MyLibrary.exe
+      - name: Attach exe to GitHub Release
+        # 只有"推的是 v 开头的 tag"这种触发方式才会走到这一步；手动点 Run workflow 不会创建 Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: gh release create "${{ github.ref_name }}" "dist/MyLibrary.exe" --title "${{ github.ref_name }}" --generate-notes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}

@@ -878,4 +878,20 @@ setInterval(pollBgTask,1500);pollBgTask();
 </div>
 <style>@keyframes bgspin{to{transform:rotate(360deg)}}</style>
 </div>
+<script>
+// 管理页背景（书房主题里"管理页"方块上传的图）
+fetch('/api/theme/list').then(r=>r.json()).then(d=>{
+  const u=(d.slots||{}).admin_bg;if(!u)return;
+  let a={x:50,y:50,zoom:100,rot:0,blur:0,feather:0};
+  try{a=Object.assign(a,(JSON.parse(localStorage.getItem('home_slot_adj')||'{}').admin_bg)||{});}catch(e){}
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;inset:0;z-index:-1;background-size:cover;pointer-events:none';
+  el.style.backgroundImage='url('+u+')';el.style.backgroundPosition=a.x+'% '+a.y+'%';
+  const z=Math.max(1,(a.zoom||100)/100);
+  if(z!==1||a.rot)el.style.transform='scale('+z+') rotate('+(a.rot||0)+'deg)';
+  if(a.blur)el.style.filter='blur('+a.blur+'px)';
+  if(a.feather){const m='radial-gradient(ellipse 118% 118% at 50% 50%, #000 '+Math.max(0,100-a.feather)+'%, transparent 100%)';el.style.webkitMaskImage=m;el.style.maskImage=m;}
+  document.body.prepend(el);
+}).catch(()=>{});
+</script>
 </body></html>

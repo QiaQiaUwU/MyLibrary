@@ -1296,7 +1296,11 @@ def scan_and_import(lib: Library, source_paths: list, mrpro_path: Optional[Path]
         interrupted['flag'] = True
         print('\n\n⚠️ 收到中断信号, 跑完当前文件后会退出. 再按一次 Ctrl+C 立即退.')
 
-    _orig_handler = signal.signal(signal.SIGINT, _handle_sigint)
+    # v4.5.0：signal 只允许在主线程注册——网页管理页的「开始入库」跑在服务的工作线程里，
+    # 直接注册会抛 ValueError 让整个任务炸掉。非主线程跳过注册（Ctrl+C 优雅中断本来就只属于命令行）。
+    import threading as _threading
+    _in_main = _threading.current_thread() is _threading.main_thread()
+    _orig_handler = signal.signal(signal.SIGINT, _handle_sigint) if _in_main else None
 
     try:
         for i, c in enumerate(candidates, 1):
@@ -1359,8 +1363,9 @@ def scan_and_import(lib: Library, source_paths: list, mrpro_path: Optional[Path]
 
         lib.conn.commit()
     finally:
-        # 恢复原 SIGINT handler, 不污染调用方
-        signal.signal(signal.SIGINT, _orig_handler)
+        # 恢复原 SIGINT handler, 不污染调用方（非主线程没注册过，跳过）
+        if _in_main:
+            signal.signal(signal.SIGINT, _orig_handler)
 
     # 中断了就不再做 phase 4 (笔记导入) 和 phase 5 (报告), 留给下一次重跑.
     if interrupted['flag']:

@@ -66,6 +66,8 @@ def migrate(db_path: Path):
     if 'tree_skin' not in existing_cols:
         c.execute("ALTER TABLE books ADD COLUMN tree_skin TEXT DEFAULT NULL")
         print('  books.tree_skin 已添加')
+    conn.commit()   # v4.6.1：以下每段都单独 commit——之前整个函数只在最后 commit 一次，
+                     # 任何一段中途出错（哪怕是无关紧要的可选数据）都会把前面全部回滚掉，包括这里已经加完的列。
 
     # ── 2. reading_notes 表 ──────────────────────────────────────────────
     c.execute('''CREATE TABLE IF NOT EXISTS reading_notes (
@@ -148,6 +150,7 @@ def migrate(db_path: Path):
         value TEXT
     )''')
     print('  ✅ reading_prefs 表就绪')
+    conn.commit()
 
     # ── 4. FTS5 全文检索虚拟表 ───────────────────────────────────────────
     # 检查是否已存在
@@ -195,15 +198,22 @@ def migrate(db_path: Path):
         updated_at TEXT
     )''')
     print('  ✅ quill_memory 表就绪（全局记忆，跨会话共通）')
+    conn.commit()   # 这几张表最要紧——先落盘，后面任何一段出错都不会连累它们
 
     # ── 5. 初始化 take_to_tablet ─────────────────────────────────────────
-    # 把已有的 mrpro 收藏标记为 take_to_tablet=1
-    mrpro_fav_count = c.execute(
-        "SELECT COUNT(*) FROM books WHERE mrpro_favorite=1 AND take_to_tablet=0"
-    ).fetchone()[0]
-    if mrpro_fav_count > 0:
-        c.execute("UPDATE books SET take_to_tablet=1 WHERE mrpro_favorite=1")
-        print(f'  ✅ {mrpro_fav_count} 本 mrpro 收藏已标记为 take_to_tablet')
+    # 把已有的 mrpro 收藏标记为 take_to_tablet=1（触碰的是可选的历史数据，单独兜底，
+    # 就算这张表在某些老库上字段对不上，也不该拖累上面已经就绪的新表）
+    try:
+        mrpro_fav_count = c.execute(
+            "SELECT COUNT(*) FROM books WHERE mrpro_favorite=1 AND take_to_tablet=0"
+        ).fetchone()[0]
+        if mrpro_fav_count > 0:
+            c.execute("UPDATE books SET take_to_tablet=1 WHERE mrpro_favorite=1")
+            print(f'  ✅ {mrpro_fav_count} 本 mrpro 收藏已标记为 take_to_tablet')
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print('  ⚠️ mrpro 收藏标记跳过（不影响其余迁移）：', e)
 
     # ── 6. 性能索引：书架/花园在 13 万行上每次都要按这些列筛选/排序，
     #        没索引就是全表扫描（首屏慢、反复加载）。可重复跑。──
@@ -220,6 +230,7 @@ def migrate(db_path: Path):
         except Exception as e:
             print('  ⚠️ 建索引跳过:', e)
     print('  ✅ 书架/花园查询索引就绪')
+    conn.commit()
 
     # ── 7. 处理标记列：让"集中处理"的任务知道哪些书处理过、不再重复处理。
     #        值存"最后处理时间"字符串，NULL=没处理过。可重复跑。──
@@ -231,6 +242,7 @@ def migrate(db_path: Path):
             except Exception:
                 pass
     print('  ✅ 处理标记列就绪（proc_dedup_at / proc_classify_at / proc_meta_at / proc_finish_at）')
+    conn.commit()
 
     # ── 8. 处理批次表：每次集中处理留一条记录，做"进度备份"，中断也能续。──
     c.execute('''CREATE TABLE IF NOT EXISTS processing_batch (

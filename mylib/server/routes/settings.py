@@ -20,7 +20,8 @@ async def api_serverinfo(request: Request):
     ip = _lan_ip()
     # 端口从请求里拿
     port = request.url.port or 8765
-    return {'lan_url': f'http://{ip}:{port}/', 'ip': ip, 'port': port}
+    from _state import APP_VERSION
+    return {'lan_url': f'http://{ip}:{port}/', 'ip': ip, 'port': port, 'version': APP_VERSION}
 
 @app.get('/api/settings')
 async def api_settings_get():
@@ -100,6 +101,45 @@ def _ai_endpoints(base_url: str):
     chat = base + '/chat/completions'
     models = base + '/models'
     return chat, models
+
+
+def _extract_model_ids(data):
+    """从各种可能的返回结构里抠出模型名，尽量兼容不同中转站/反代：
+    - 标准 OpenAI / New API: {"data":[{"id":...}]}
+    - 裸数组: [{"id":...}] 或 ["gpt-4o", ...]
+    - Gemini 原生风味: {"models":[{"name":"models/gemini-..."}]}
+    - 其它: 项可能是字符串，或字段叫 name/model/model_name
+    """
+    ids = []
+    def push(x):
+        if isinstance(x, str):
+            if x.strip():
+                ids.append(x.strip())
+        elif isinstance(x, dict):
+            for k in ('id', 'name', 'model', 'model_name'):
+                v = x.get(k)
+                if isinstance(v, str) and v.strip():
+                    ids.append(v.strip())
+                    break
+    try:
+        if isinstance(data, list):
+            for it in data:
+                push(it)
+        elif isinstance(data, dict):
+            for key in ('data', 'models', 'result', 'model_list'):
+                arr = data.get(key)
+                if isinstance(arr, list):
+                    for it in arr:
+                        push(it)
+            if not ids and (data.get('id') or data.get('name')):
+                push(data)
+    except Exception:
+        pass
+    seen = set(); out = []
+    for m in ids:
+        if m not in seen:
+            seen.add(m); out.append(m)
+    return out
 
 
 def _http_json(url: str, headers: dict, payload=None, timeout: int = 20):
@@ -186,31 +226,53 @@ async def api_settings_models(request: Request):
         return {'ok': False, 'error': '请先填 Base URL'}
     if not api_key:
         return {'ok': False, 'error': '请先填 API Key'}
-    _, models_url = _ai_endpoints(base_url)
-    headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
     from fastapi.concurrency import run_in_threadpool
-    status, data, err = await run_in_threadpool(_http_json, models_url, headers, None, 20)
-    if err:
-        hint = err
-        if status == 401:
-            hint = 'API Key 不对（401）'
-        elif status == 404:
-            hint = '该接口没有 /models 列表（404）。可以直接手填模型名'
-        return {'ok': False, 'error': hint, 'status': status}
+    base = base_url.rstrip('/')
+    # 候选 models 地址：优先按用户填的；若没写 /v1 再补一个 /v1 版兜底
+    cands = [base + '/models']
+    if '/v1' not in base.lower():
+        cands.append(base + '/v1/models')
+    headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
     ids = []
-    try:
-        items = data.get('data') if isinstance(data, dict) else None
-        if isinstance(items, list):
-            for it in items:
-                mid = it.get('id') if isinstance(it, dict) else None
-                if mid:
-                    ids.append(mid)
-    except Exception:
-        pass
-    ids = sorted(set(ids))
+    status, data, err, used = 0, None, None, None
+    # 尝试 1：标准 Bearer 头（OpenAI / New API 等绝大多数）
+    for mu in cands:
+        s, d, e = await run_in_threadpool(_http_json, mu, headers, None, 20)
+        got = _extract_model_ids(d)
+        if got:
+            ids, status, data, used = got, s, d, mu
+            break
+        if status == 0 and (s or e):     # 留住第一个有意义的诊断
+            status, data, err, used = s, d, e, mu
+    # 尝试 2：把 key 当查询参数（部分 Gemini 反代要 ?key=，不认 Bearer）
     if not ids:
-        return {'ok': False, 'error': '接口没返回模型列表，可直接手填模型名', 'status': status}
-    return {'ok': True, 'models': ids, 'count': len(ids)}
+        mu = used or cands[0]
+        url2 = mu + (('&' if '?' in mu else '?') + 'key=' + api_key)
+        s2, d2, e2 = await run_in_threadpool(_http_json, url2, {'Content-Type': 'application/json'}, None, 20)
+        got2 = _extract_model_ids(d2)
+        if got2:
+            ids, status, data = got2, s2, d2
+    if ids:
+        return {'ok': True, 'models': sorted(set(ids)), 'count': len(set(ids))}
+    # 全都没拿到：给可读诊断（状态码 + 返回片段），前端会显示出来，方便判断是 404 还是格式问题
+    snippet = ''
+    if isinstance(data, str):
+        snippet = data[:200]
+    elif data is not None:
+        try:
+            snippet = json.dumps(data, ensure_ascii=False)[:200]
+        except Exception:
+            snippet = str(data)[:200]
+    hint = '这个接口没返回可识别的模型列表，直接手填模型名即可'
+    if status == 401:
+        hint = 'API Key 不对（401）'
+    elif status == 403:
+        hint = '没权限访问模型列表（403），直接手填模型名'
+    elif status == 404:
+        hint = '这个中转站没有 /models 列表接口（404）——常见于逆向站，去它控制台/模型广场复制完整模型名手填即可'
+    elif status == 0:
+        hint = (err or '连不上') + '，检查 Base URL / 网络'
+    return {'ok': False, 'error': hint, 'status': status, 'detail': snippet}
 
 
 # ── 连接配置档（参考 SillyTavern）：保存多套接口、一键切换 ────────────────────
@@ -294,3 +356,34 @@ async def api_ai_profiles_activate(request: Request):
     return {'ok': True, 'active': name, 'model': cfg['ai'].get('model', ''), 'base_url': cfg['ai'].get('base_url', '')}
 
 # ── 母库管理面板 ─────────────────────────────────────────────────────────────
+
+
+@app.post('/api/shutdown')
+async def api_shutdown():
+    """一键停止服务：设置页按钮调用。免得每次都要去任务管理器杀进程才能重启。"""
+    import threading, os
+    threading.Timer(0.4, lambda: os._exit(0)).start()
+    return {'ok': True, 'msg': 'bye'}
+
+
+# ===== 心跳自动退出（服务端核心版，任何启动方式都生效） =====
+# 每个页面 ~20s ping 一次；第一次 ping 之后武装看门狗，之后 90s 没心跳（=浏览器全关）就自动退出、释放端口。
+# 想关掉这个行为：设环境变量 MYLIB_NO_WATCHDOG=1
+import time as _hb_time, threading as _hb_threading, os as _hb_os
+_HB = {'t': 0.0, 'armed': False}
+
+@app.get('/api/heartbeat')
+async def api_heartbeat():
+    _HB['t'] = _hb_time.time()
+    _HB['armed'] = True
+    return {'ok': True}
+
+def _hb_watchdog():
+    while True:
+        _hb_time.sleep(10)
+        if _HB['armed'] and (_hb_time.time() - _HB['t'] > 90):
+            print('\n  浏览器已全部关闭，MyLibrary 自动退出（端口已释放）。')
+            _hb_os._exit(0)
+
+if _hb_os.environ.get('MYLIB_NO_WATCHDOG') != '1':
+    _hb_threading.Thread(target=_hb_watchdog, daemon=True).start()

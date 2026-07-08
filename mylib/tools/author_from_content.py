@@ -11,6 +11,8 @@ author_from_content.py — 按正文找回/合并作者
 预览优先：只给建议，执行合并由调用方在备份后进行。
 """
 import re
+import os
+import concurrent.futures as _cf
 from pathlib import Path
 
 # 正文开头里常见的作者身份标记（按可靠性从高到低）
@@ -58,30 +60,44 @@ def _read_head(filepath: Path, max_bytes=200_000):
 _ANON = {'佚名', '匿名', '未知', '无名', '未知作者', '', None}
 
 
-def find_clusters(conn, root, max_bytes=200_000, on_progress=None):
+def _scan_one_book(args):
+    """单本书的读取+抽取，跑在线程池里；纯函数、不碰共享状态，方便并发调用。"""
+    r, root, max_bytes = args
+    rel = r['file_path'] if not isinstance(r, tuple) else r[3]
+    author = (r['author'] or '佚名')
+    title = r['title'] or ''
+    fp = Path(root) / rel
+    if not fp.exists():
+        return (r['id'], title, author, frozenset())
+    text = _read_head(fp, max_bytes)
+    if not text:
+        return (r['id'], title, author, frozenset())
+    return (r['id'], title, author, frozenset(extract_handles(text)))
+
+
+def find_clusters(conn, root, max_bytes=200_000, on_progress=None, max_workers=None):
     """
     扫全库正文开头，按身份标记聚类。
+    v4.6：13 万本顺序扫一遍要跑几分钟——这一步本质是"打开文件、读几百 KB"，
+    瓶颈在磁盘/文件系统等待而不是 CPU，用线程池并发读（Python 的文件 I/O 会释放 GIL），
+    等待时间互相重叠，墙钟时间明显缩短；聚类逻辑仍在主线程单线程做，天然无需加锁。
     返回 [{handle, suggested, books:[{id,title,author}]}]，
-    只保留"同一标记、但记录的作者名不止一种"的簇（＝疑似笨名分裂）。
+    只保留"同一标记、但记录的作者名不止一种"的簇（＝疑似笔名分裂）。
     """
     from collections import Counter
     rows = conn.execute("SELECT id, title, author, file_path FROM books").fetchall()
     total = len(rows)
     handle_books = {}
-    for i, r in enumerate(rows):
-        if on_progress and (i % 200 == 0):
-            on_progress(i, total)
-        rel = r['file_path'] if not isinstance(r, tuple) else r[3]
-        fp = Path(root) / rel
-        if not fp.exists():
-            continue
-        text = _read_head(fp, max_bytes)
-        if not text:
-            continue
-        author = (r['author'] or '佚名')
-        for h in extract_handles(text):
-            handle_books.setdefault(h.lower(), {'disp': h, 'books': []})['books'].append(
-                {'id': r['id'], 'title': r['title'] or '', 'author': author})
+    workers = max_workers or min(32, (os.cpu_count() or 4) * 4)
+    done = 0
+    with _cf.ThreadPoolExecutor(max_workers=workers) as ex:
+        for bid, title, author, handles in ex.map(_scan_one_book, ((r, root, max_bytes) for r in rows)):
+            done += 1
+            if on_progress and (done % 200 == 0 or done == total):
+                on_progress(done, total)
+            for h in handles:
+                handle_books.setdefault(h.lower(), {'disp': h, 'books': []})['books'].append(
+                    {'id': bid, 'title': title, 'author': author})
 
     clusters = []
     for key, v in handle_books.items():

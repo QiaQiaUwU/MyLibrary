@@ -60,34 +60,45 @@ async def api_book_reads(book_id: int):
         ).fetchall()
     except Exception:
         rows = []
+    # v4.5.0 口径统一：阅读器上报的是 0~100 整数，但历史数据里可能混着旧版 0~1 小数
+    # ——这里全部归一成 0~100，修掉"读到 4300%"那类显示（旧逻辑把 43 当 0.43 再 ×100）。
+    def _pct(v):
+        try:
+            v = float(v or 0)
+        except Exception:
+            return 0.0
+        if 0 < v <= 1 and v != int(v):   # 0.43 这类旧格式小数 → 43；整数 1 视为 1%
+            v *= 100
+        return max(0.0, min(100.0, v))
     days = [{'date': r['date'], 'minutes': r['minutes_read'] or 0,
-             'start': r['start_pct'] or 0, 'end': r['end_pct'] or 0} for r in rows]
-    # 估算"遍数"：相邻阅读日间隔 >10 天，或进度明显回退（这天起点比上次终点低 >30%）算开了新一遍
-    passes = 0
-    pass_starts = []
-    prev = None
+             'start': _pct(r['start_pct']), 'end': _pct(r['end_pct'])} for r in rows]
+    # v4.5.0 遍数新口径：进度从 0 走到 100 才算一遍（≥97% 视为读完）。
+    # 旧的"隔 10 天以上算新一遍"是猜法——6/19 读 1 分钟、7/05 再读就被算成"第 2 遍"，不对。
+    # 现在：读完（end≥97）的那天记「第 N 遍读完」；读完之后再读，才进入下一遍；
+    # 没读完的只算"本遍进行中"，接口给出 current_pct 供前端显示"本遍读到 x%"。
+    DONE = 97
+    passes = 0                 # 已读完的遍数
+    pass_marks = []            # [{'date','n'}] 第 n 遍读完落在哪一天
+    in_pass = False            # 当前是否有一遍在进行中
+    cur_pct = 0.0
     for d in days:
-        newpass = False
-        if prev is None:
-            newpass = True
-        else:
-            gap = 999
-            try:
-                gap = (_date.fromisoformat(d['date']) - _date.fromisoformat(prev['date'])).days
-            except Exception:
-                gap = 0
-            if gap > 10 or (d['start'] < (prev['end'] or 0) - 0.3):
-                newpass = True
-        if newpass:
-            passes += 1
-            pass_starts.append(d['date'])
-        prev = d
+        if not in_pass and (d['minutes'] > 0 or d['end'] > 0):
+            in_pass = True     # 读完后（或第一次）再翻开，开启新一遍
+        if in_pass:
+            cur_pct = max(cur_pct, d['end'])   # 本遍到过的最远处
+            if d['end'] >= DONE:
+                passes += 1
+                pass_marks.append({'date': d['date'], 'n': passes})
+                in_pass = False
+                cur_pct = 0.0
     total_min = sum(d['minutes'] for d in days)
     return {
         'days': list(reversed(days)),          # 最近在前
         'day_count': len(days),
-        'passes': passes if days else 0,
-        'pass_starts': list(reversed(pass_starts)),
+        'passes': passes,                      # 读完的遍数（0→100 才算一遍）
+        'pass_marks': list(reversed(pass_marks)),
+        'in_pass': in_pass,                    # 有一遍在进行中
+        'current_pct': round(cur_pct) if in_pass else 0,   # 本遍读到百分之几
         'total_minutes': total_min,
         'first': days[0]['date'] if days else '',
         'last': days[-1]['date'] if days else '',

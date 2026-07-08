@@ -311,6 +311,20 @@ async def api_update(request: Request):
         # 打开/标在读时也更新"最近阅读时间"，让书架"最新在读放最前"立刻生效
         if body.get('reading_status') == 'reading':
             sets.append("last_open=datetime('now')")
+            # 读完过的书又开始读 → 把上一轮存成"历史树"（花园里老树留档，新一轮另长一棵）
+            try:
+                cur = lib.conn.execute("SELECT title, author, reading_status, is_finished, tree_skin FROM books WHERE id=?", (bid,)).fetchone()
+                was_fin = cur and ((cur['reading_status'] or '') == 'finished' or (cur['is_finished'] or 0) == 1)
+                if was_fin:
+                    lib.conn.execute('''CREATE TABLE IF NOT EXISTS tree_history(
+                        id INTEGER PRIMARY KEY AUTOINCREMENT, book_id INTEGER, title TEXT, author TEXT,
+                        skin TEXT, month TEXT, created_at TEXT DEFAULT (datetime('now')))''')
+                    m = lib.conn.execute("SELECT MAX(date) md FROM reading_diary WHERE book_id=?", (bid,)).fetchone()
+                    month = (m['md'][:7] if m and m['md'] else '')
+                    lib.conn.execute("INSERT INTO tree_history(book_id,title,author,skin,month) VALUES(?,?,?,?,?)",
+                                     (bid, cur['title'] or '', cur['author'] or '', (cur['tree_skin'] or 'spruce'), month))
+            except Exception:
+                pass
         vals.append(bid)
         lib.conn.execute(f'UPDATE books SET {",".join(sets)} WHERE id=?', vals)
         lib.conn.commit()
@@ -409,7 +423,7 @@ async def api_import_files(files: list[UploadFile] = File(...)):
     for f in files:
         name = (f.filename or 'book.txt')
         ext = name.rsplit('.', 1)[-1].lower() if '.' in name else 'txt'
-        if ext not in ('txt', 'epub', 'md', 'html', 'htm', 'mobi', 'azw3'):
+        if ext not in ('txt', 'epub', 'md', 'html', 'htm', 'mobi', 'azw3', 'pdf'):
             skipped += 1; continue
         safe = re.sub(r'[\\/:*?"<>|]', '_', name)
         target = dest / safe
@@ -493,6 +507,22 @@ async def api_books_batch(request: Request):
         raise HTTPException(400, 'unknown action')
     lib.conn.commit()
     return {'ok': True, 'done': done}
+
+@app.delete('/api/tag')
+async def api_tag_delete_all(name: str = Query(...)):
+    """整库删除一个标签（筛选面板"编辑标签"用）：删 book_tags 关联 + tags 行本身。
+    只动 genre 类标签（就是筛选面板里显示的那些），书本身不受影响。"""
+    lib = get_lib()
+    c = lib.conn
+    ids = [r['id'] for r in c.execute("SELECT id FROM tags WHERE name=? AND kind='genre'", (name,))]
+    if not ids:
+        return {'ok': True, 'removed': 0}
+    ph = ','.join('?' * len(ids))
+    cur = c.execute(f"DELETE FROM book_tags WHERE tag_id IN ({ph})", ids)
+    removed = cur.rowcount
+    c.execute(f"DELETE FROM tags WHERE id IN ({ph})", ids)
+    lib.conn.commit()
+    return {'ok': True, 'removed': removed}
 
 @app.post('/api/tag')
 async def api_tag(request: Request):

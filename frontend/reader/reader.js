@@ -30,7 +30,10 @@ const TEXTURES={
   none:'none',
   paper:'url(/api/theme/asset/texture_paper.png)',
   linen:'url(/api/theme/asset/texture_linen.png)',
+  twill:'url(/api/theme/asset/texture_twill.png)',
+  canvas:'url(/api/theme/asset/texture_canvas.png)',
   grain:'url(/api/theme/asset/texture_grain.png)',
+  dots:'url(/api/theme/asset/texture_dots.png)',
 };
 const FONTS={serif:"'Noto Serif SC','Songti SC',serif",kai:"'Kaiti SC','STKaiti',楷体,serif",hei:"'Noto Sans SC','PingFang SC',sans-serif",fangsong:"'FangSong','STFangsong',仿宋,serif"};
 
@@ -64,13 +67,32 @@ async function READER_INIT(){
 // 偏好读写（存DB而非localStorage）
 let PREFS={};
 function localStorage_get(k){return PREFS[k];}
+function _syncOptRow(rowId,val){
+  const row=document.getElementById(rowId);if(!row)return;
+  const v=String(val);
+  row.querySelectorAll('.opt').forEach(b=>b.classList.toggle('sel',b.dataset.v===v));
+}
 async function loadPrefs(){
-  try{PREFS=await (await fetch('/api/reading-prefs')).json();}catch(e){PREFS={};}
+  try{PREFS=await (await fetch('/api/reading-prefs')).json();}catch(e){PREFS={};console.warn('阅读偏好加载失败',e);}
   if(PREFS.skin)applySkin(PREFS.skin);
   if(PREFS.fontsize)setFontSize(PREFS.fontsize,true);
-  if(PREFS.lineheight)document.documentElement.style.setProperty('--lineheight',PREFS.lineheight);
-  if(PREFS.font)document.documentElement.style.setProperty('--font',FONTS[PREFS.font]||FONTS.serif);
-  if(PREFS.texture)document.documentElement.style.setProperty('--texture',TEXTURES[PREFS.texture]||'none');
+  if(PREFS.lineheight){
+    document.documentElement.style.setProperty('--lineheight',PREFS.lineheight);
+    _syncOptRow('lineheight-row',PREFS.lineheight);
+  }
+  if(PREFS.font){
+    document.documentElement.style.setProperty('--font',FONTS[PREFS.font]||FONTS.serif);
+    _syncOptRow('font-row',PREFS.font);
+  }
+  if(PREFS.texture){
+    document.documentElement.style.setProperty('--texture',TEXTURES[PREFS.texture]||'none');
+    _syncOptRow('texture-row',PREFS.texture);
+  }
+  if(PREFS.textureOp!==undefined&&PREFS.textureOp!==null&&PREFS.textureOp!==''){
+    const op=Math.max(0,Math.min(100,parseInt(PREFS.textureOp)||70));
+    document.documentElement.style.setProperty('--texture-op',op/100);
+    const ts=document.getElementById('texop-slider');if(ts)ts.value=op;
+  }
   if(PREFS.pageSound==='0'){pageSoundOn=false;}
   if(PREFS.pageVol!==undefined&&PREFS.pageVol!==null&&PREFS.pageVol!==''){
     pageVol=Math.max(0,Math.min(1,(parseInt(PREFS.pageVol)||70)/100));
@@ -83,7 +105,16 @@ async function loadPrefs(){
   }
   if(PREFS.mode==='page'){mode='page';}
 }
-async function savePref(k,v){PREFS[k]=v;try{await fetch('/api/reading-prefs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({[k]:v})});}catch(e){}}
+async function savePref(k,v){
+  PREFS[k]=v;
+  try{
+    const r=await fetch('/api/reading-prefs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({[k]:v})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+  }catch(e){
+    console.warn('阅读偏好保存失败：',k,v,e);
+    if(typeof toast==='function')toast('设置没保存上（网络问题），刷新后可能会恢复默认');
+  }
+}
 
 async function loadBook(){
   if(!bookId){showReaderError('缺少书籍 id');return;}
@@ -105,6 +136,7 @@ async function loadBook(){
   try{bookmarks=(await (await fetch('/api/bookmarks/'+bookId)).json()).bookmarks||[];}catch(e){}
 
   if(bookExt==='epub'){await loadEpub();return;}
+  if(bookExt==='pdf'){await loadPdf();return;}
 
   // 先把滚动视图亮出来并显示"正在加载"，别让用户对着白屏不知道发生了什么
   try{
@@ -459,6 +491,7 @@ function bindEvents(){
   const _wakeAudio=()=>{const c=_ensureAudioCtx();if(c&&c.state==='suspended'){try{c.resume();}catch(e){}}_preloadPageSound();};
   document.addEventListener('pointerdown',_wakeAudio,{once:true});
   document.addEventListener('touchstart',_wakeAudio,{once:true});
+  document.addEventListener('keydown',_wakeAudio,{once:true});   // 有人第一下交互就是按方向键翻页，不一定先点/触过屏
   // 触摸设备兜底：手机选字常是用原生手柄拖出/调整的，document 上未必触发 touchend → 菜单弹不出来。
   // 用 selectionchange 防抖：选区稳定且非空时，自动把（停靠底部的）笔记菜单弹出来。
   document.addEventListener('selectionchange',scheduleSelMenuTouch);
@@ -550,6 +583,7 @@ function animateFlip(dir){
 // 翻页音效：改用 Web Audio 预解码播放，几乎零延迟。
 // （旧版用 HTML5 Audio + 每次 currentTime=0 再 play()，play() 有解码/缓冲延迟 → “翻完页半天才响”。Web Audio 播预解码的 buffer 是同步、可叠放的。）
 let pageSoundOn=true,pageVol=0.7;
+const PAGE_SFX_MAX=0.5;   // 单次翻页音最长秒数：文件再长也只放这一小段（收尾淡出），彻底避免"点一下一直翻"。想更长/更短改这里即可
 let _actx=null,_pageBuf=null,_pageBufLoading=false,_pageAudio=null,_pageAudioStop=null,_pageStart=0;
 function _ensureAudioCtx(){
   if(_actx)return _actx;
@@ -580,8 +614,16 @@ function playPageSound(){
   if(ctx&&_pageBuf){                       // 主路：Web Audio，零延迟、可叠放
     try{
       const src=ctx.createBufferSource();src.buffer=_pageBuf;
-      const g=ctx.createGain();g.gain.value=pageVol;
-      src.connect(g);g.connect(ctx.destination);src.start(0,_pageStart||0);   // 从首个可闻样本起播，跳过前导静音
+      const g=ctx.createGain();
+      const now=ctx.currentTime, off=_pageStart||0;
+      // 只播 PAGE_SFX_MAX 这一小段：翻页音文件哪怕有好几秒的"哗啦啦"，也只出"一下"
+      const dur=Math.min(PAGE_SFX_MAX, Math.max(0.05,(_pageBuf.duration||PAGE_SFX_MAX)-off));
+      g.gain.setValueAtTime(pageVol, now);
+      g.gain.setValueAtTime(pageVol, now+Math.max(0,dur-0.06));
+      g.gain.linearRampToValueAtTime(0, now+dur);        // 收尾淡出，硬切一段长音频不会"啪"地爆音
+      src.connect(g);g.connect(ctx.destination);
+      src.start(now, off, dur);                           // 第三个参数=时长，超出部分不播
+      try{src.stop(now+dur+0.02);}catch(_){}
       return;
     }catch(e){}
   }
@@ -589,7 +631,7 @@ function playPageSound(){
   try{                                     // 回退路：HTML5 Audio
     if(!_pageAudio){_pageAudio=new Audio('/api/sfx/pageturn');_pageAudio.preload='auto';}
     _pageAudio.volume=pageVol;_pageAudio.currentTime=_pageStart||0;_pageAudio.play().catch(()=>{});
-    clearTimeout(_pageAudioStop);_pageAudioStop=setTimeout(()=>{try{_pageAudio.pause();}catch(e){}},1600);
+    clearTimeout(_pageAudioStop);_pageAudioStop=setTimeout(()=>{try{_pageAudio.pause();}catch(e){}},PAGE_SFX_MAX*1000);
   }catch(e){}
 }
 function setPageVol(v){pageVol=Math.max(0,Math.min(1,v/100));savePref('pageVol',String(Math.round(pageVol*100)));if(_pageAudio)_pageAudio.volume=pageVol;}
@@ -853,6 +895,7 @@ function setFontSize(v,silent){document.documentElement.style.setProperty('--fon
 function setLineHeight(v,btn){document.documentElement.style.setProperty('--lineheight',v);savePref('lineheight',v);document.querySelectorAll('#panel-skin .opt-row .opt').forEach(()=>{});btn.parentNode.querySelectorAll('.opt').forEach(e=>e.classList.remove('sel'));btn.classList.add('sel');repaginate();}
 function setFont(f,btn){document.documentElement.style.setProperty('--font',FONTS[f]);savePref('font',f);document.querySelectorAll('#font-row .opt').forEach(e=>e.classList.remove('sel'));btn.classList.add('sel');repaginate();}
 function setTexture(t,btn){document.documentElement.style.setProperty('--texture',TEXTURES[t]);savePref('texture',t);document.querySelectorAll('#texture-row .opt').forEach(e=>e.classList.remove('sel'));btn.classList.add('sel');}
+function setTextureOp(v){const op=Math.max(0,Math.min(100,parseInt(v)||0));document.documentElement.style.setProperty('--texture-op',op/100);savePref('textureOp',op);}
 
 // ============ 进度 & 日记 ============
 function saveProgress(){
@@ -1416,6 +1459,7 @@ function renderMarks(body){
 }
 function renderToc(body){
   if(bookExt==='epub'&&epubBook){body.innerHTML='<div class="li-sub" style="padding:10px">epub 目录见下</div>';return;}
+  if(bookExt==='pdf'){body.innerHTML='<div class="li-sub" style="padding:10px">PDF 用的是浏览器自带查看器，目录/书签暂时接不上，直接在上面翻页就好。</div>';return;}
   const toc=buildToc(bookText);
   if(!toc.length){body.innerHTML='<div class="li-sub" style="padding:10px">这本书没有章节标记，也太短，无法生成目录。</div>';return;}
   // 找当前正在读的章节：起点 pos 不超过当前阅读位置的最后一个
@@ -1827,7 +1871,7 @@ async function delQuillSession(id){
   loadQuillHistory();
 }
 
-// ============ 环境音（只用本地 _ambient 真实音频）============
+// ============ 声音（只用本地 _ambient 真实音频）============
 let ambientEls={};               // id -> {audio, vol}
 // 把丑文件名洗成友好名字（去来源前缀/随机数字，关键词转中文）
 function prettyAmbName(raw){
@@ -1842,31 +1886,187 @@ function prettyAmbName(raw){
   map.forEach(([k,v])=>{if(zh.includes(k)&&!hit.includes(v))hit.push(v);});
   return hit.length?hit.join('·'):(s||raw);
 }
-function buildAmbientUI(){
-  fetch('/api/ambient/list').then(r=>r.json()).then(d=>{
-    const local=(d.sounds||[]).map(s=>({id:'local_'+s.id,name:s.name,nice:prettyAmbName(s.name),localFile:s.file}));
-    window._allAmbients=local;
-    const grid=document.getElementById('ambient-grid');
-    if(local.length){
-      grid.innerHTML=local.map(a=>`
+let _ambGroups=null,_ambEdit=false,_ambSaveT=null,_ambDragId=null;
+function _ambName(a){const nm=(_ambGroups&&_ambGroups.names)||{};return nm[a.id]||a.nice;}
+function ambRename(id){
+  const a=(window._allAmbients||[]).find(x=>x.id===id);if(!a)return;
+  const name=prompt('名字：',_ambName(a));if(!name)return;
+  (_ambGroups.names=_ambGroups.names||{})[id]=name;
+  saveAmbGroups();renderAmbList();
+}
+function _ambRowHTML(a){
+  return `
         <div class="amb-wrap" data-row="${a.id}">
           <div class="amb-item">
-            <button class="amb-btn" data-amb="${a.id}" onclick="toggleAmb('${a.id}')" title="${a.name}">${a.nice}</button>
+            ${_ambEdit?`<span class="amb-grip" title="拖动排序/入组">≡</span><span class="amb-updown"><button onclick="ambMove('${a.id}',-1)">▲</button><button onclick="ambMove('${a.id}',1)">▼</button></span>`:''}
+            <button class="amb-btn" data-amb="${a.id}" onclick="toggleAmb('${a.id}')" title="${a.name}">${_ambName(a)}</button><span class="amb-eq"><i></i><i></i><i></i></span>${_ambEdit&&a.user?`<span class="amb-rename" onclick="ambRename('${a.id}')">✎</span>`:''}
             <input class="amb-vol" type="range" min="0" max="100" value="50" oninput="setAmbItemVol('${a.id}',this.value)" title="音量" disabled>
+            <button class="amb-fold" onclick="ambRowFold('${a.id}',event)" title="展开 / 收起细调">▾</button>
+            ${_ambEdit?`<select class="amb-gsel" onchange="ambSetGroup('${a.id}',this.value)">${[['','未分组']].concat((_ambGroups.groups||[]).map(g=>[g.id,g.name])).map(([v,n])=>`<option value="${v}" ${((_ambGroups.item||{})[a.id]||'')===v?'selected':''}>${n}</option>`).join('')}</select>`:''}
+            ${a.user&&_ambEdit?`<button class="amb-del" title="删除（自己上传的）" onclick="delAmbient('${a.id}',event)">×</button>`:''}
           </div>
           <div class="amb-detail">
-            <div class="amb-drow"><span class="amb-dlbl">快慢</span><input class="amb-rate" type="range" min="50" max="150" value="100" oninput="setAmbItemRate('${a.id}',this.value)" title="慢=更低沉，快=更急促"></div>
-            <div class="amb-drow"><span class="amb-dlbl">远近</span><input class="amb-muffle" type="range" min="0" max="100" value="0" oninput="setAmbItemMuffle('${a.id}',this.value)" title="往右削高频，声音更闷更远，像隔着雪或墙"></div>
-            <div class="amb-drow"><span class="amb-dlbl">空间</span><input class="amb-reverb" type="range" min="0" max="100" value="0" oninput="setAmbItemReverb('${a.id}',this.value)" title="往右加混响，更空旷、有回响余韵"></div>
+            <div class="amb-drow"><span class="amb-dlbl">快慢</span><input class="amb-rate" type="range" min="50" max="150" value="100" oninput="setAmbItemRate('${a.id}',this.value)"></div>
+            <div class="amb-drow"><span class="amb-dlbl">远近</span><input class="amb-muffle" type="range" min="0" max="100" value="0" oninput="setAmbItemMuffle('${a.id}',this.value)"></div>
+            <div class="amb-drow"><span class="amb-dlbl">空间</span><input class="amb-reverb" type="range" min="0" max="100" value="0" oninput="setAmbItemReverb('${a.id}',this.value)"></div>
           </div>
-        </div>`).join('')
-        +`<button class="amb-stopall" onclick="stopAllAmbient()">全部停止</button>`;
-    }else{
-      grid.innerHTML='<div style="font-size:13px;color:var(--ui-text);padding:10px;line-height:1.6">还没有环境音。把音频文件（mp3/ogg/m4a）放到项目的 <b>_ambient</b> 文件夹即可，文件名会作为显示名（建议改成「下雨.mp3」这种好认的名字）。</div>';
-    }
-  }).catch(()=>{
-    document.getElementById('ambient-grid').innerHTML='<div style="font-size:13px;color:#999;padding:10px">环境音加载失败</div>';
+        </div>`;
+}
+function saveAmbGroups(){
+  clearTimeout(_ambSaveT);
+  _ambSaveT=setTimeout(()=>{fetch('/api/reading-prefs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ambientGroups:JSON.stringify(_ambGroups||{})})}).catch(()=>{});},400);
+}
+function ambEditToggle(){_ambEdit=!_ambEdit;const p2=document.querySelector('.ambient-panel');if(p2)p2.classList.toggle('editing',_ambEdit);renderAmbList();}
+function ambNewGroup(){
+  const name=prompt('分组名字：','雨天');if(!name)return;
+  (_ambGroups.groups=_ambGroups.groups||[]).push({id:'g'+Date.now(),name});
+  saveAmbGroups();renderAmbList();
+}
+function ambRenameGroup(gid){
+  const g=(_ambGroups.groups||[]).find(x=>x.id===gid);if(!g)return;
+  const name=prompt('改名：',g.name);if(!name)return;
+  g.name=name;saveAmbGroups();renderAmbList();
+}
+function ambDelGroup(gid){
+  if(!confirm('删除这个分组？组里的声音会回到未分组'))return;
+  _ambGroups.groups=(_ambGroups.groups||[]).filter(x=>x.id!==gid);
+  Object.keys(_ambGroups.item||{}).forEach(k=>{if(_ambGroups.item[k]===gid)delete _ambGroups.item[k];});
+  saveAmbGroups();renderAmbList();
+}
+function ambSetGroup(id,gid){
+  (_ambGroups.item=_ambGroups.item||{})[id]=gid||undefined;
+  if(!gid)delete _ambGroups.item[id];
+  saveAmbGroups();renderAmbList();
+}
+function ambMove(id,d){
+  const gid=(_ambGroups.item||{})[id]||'';
+  const list=(window._allAmbients||[]).filter(x=>(((_ambGroups.item||{})[x.id])||'')===gid).map(x=>x.id);
+  const saved=((_ambGroups.order||{})[gid]||[]).filter(i=>list.includes(i));
+  const ids=saved.concat(list.filter(i=>!saved.includes(i)));
+  const i=ids.indexOf(id);if(i<0)return;
+  const j=i+d;if(j<0||j>=ids.length)return;
+  ids.splice(i,1);ids.splice(j,0,id);
+  (_ambGroups.order=_ambGroups.order||{})[gid]=ids;
+  saveAmbGroups();renderAmbList();
+}
+function ambFoldToggle(gid){
+  let f={};try{f=JSON.parse(localStorage.getItem('amb_fold')||'{}');}catch(e){}
+  f[gid]=!f[gid];localStorage.setItem('amb_fold',JSON.stringify(f));
+  renderAmbList();
+}
+function renderAmbList(){
+  const grid=document.getElementById('ambient-grid');
+  const local=window._allAmbients||[];
+  if(!grid)return;
+  if(!local.length){grid.innerHTML='<div class="amb-empty">还没有声音——点上面「＋ 上传白噪音」。</div>';return;}
+  _ambGroups=_ambGroups||{};_ambGroups.groups=_ambGroups.groups||[];_ambGroups.item=_ambGroups.item||{};_ambGroups.order=_ambGroups.order||{};
+  let fold={};try{fold=JSON.parse(localStorage.getItem('amb_fold')||'{}');}catch(e){}
+  const byId={};local.forEach(x=>byId[x.id]=x);
+  const inGroup=id=>_ambGroups.item[id]||'';
+  const orderOf=(gid,ids)=>{
+    const saved=(_ambGroups.order[gid]||[]).filter(i=>ids.includes(i));
+    return saved.concat(ids.filter(i=>!saved.includes(i)));
+  };
+  let h=`<div class="amb-toolrow"><span style="margin-right:auto"></span>
+    ${_ambEdit?`<button class="amb-mini" onclick="ambNewGroup()">＋分组</button>`:''}
+    <button class="amb-mini" onclick="ambEditToggle()">${_ambEdit?'完成':'编辑'}</button></div>`;
+  _ambGroups.groups.forEach(g=>{
+    const ids=orderOf(g.id,local.filter(x=>inGroup(x.id)===g.id).map(x=>x.id));
+    const folded=!!fold[g.id];
+    h+=`<div class="amb-ghead" data-gh="${g.id}" onclick="ambFoldToggle('${g.id}')">${folded?'▸':'▾'} ${g.name}<span class="amb-gn">${ids.length}</span>
+      ${_ambEdit?`<span class="amb-gops"><a onclick="event.stopPropagation();ambRenameGroup('${g.id}')">改名</a><a onclick="event.stopPropagation();ambDelGroup('${g.id}')">删除</a></span>`:''}</div>`;
+    if(!folded)h+=`<div class="amb-gbody" data-gbody="${g.id}">`+ids.map(i=>_ambRowHTML(byId[i])).join('')+`</div>`;
   });
+  const looseIds=orderOf('',local.filter(x=>!inGroup(x.id)).map(x=>x.id));
+  if(looseIds.length){
+    if(_ambGroups.groups.length)h+=`<div class="amb-ghead amb-loose">未分组<span class="amb-gn">${looseIds.length}</span></div>`;
+    h+=`<div class="amb-gbody" data-gbody="">`+looseIds.map(i=>_ambRowHTML(byId[i])).join('')+`</div>`;
+  }
+  h+=`<button class="amb-stopall" onclick="stopAllAmbient()">全部停止</button>`;
+  grid.innerHTML=h;
+  syncAmbUI&&syncAmbUI();
+  // 长按=进编辑
+  grid.querySelectorAll('.amb-wrap').forEach(el=>{
+    let t=null,fired=false;
+    el.addEventListener('pointerdown',e=>{
+      if(_ambEdit||e.target.closest('input'))return;
+      fired=false;t=setTimeout(()=>{t=null;fired=true;_ambEdit=true;renderAmbList();},550);
+    });
+    const c=()=>{if(t){clearTimeout(t);t=null;}};
+    el.addEventListener('pointerup',c);el.addEventListener('pointerleave',c);
+    el.addEventListener('click',e=>{if(fired){e.stopPropagation();e.preventDefault();fired=false;}},true);
+  });
+  const pn=document.querySelector('.ambient-panel');if(pn)pn.classList.toggle('editing',_ambEdit);
+  if(_ambEdit){
+    const inGroupOf=id=>(_ambGroups.item||{})[id]||'';
+    grid.querySelectorAll('.amb-grip').forEach(gr=>{
+      gr.addEventListener('pointerdown',e=>{
+        e.preventDefault();e.stopPropagation();
+        const row=gr.closest('.amb-wrap');if(!row)return;
+        const id=row.dataset.row;
+        row.classList.add('dragging');
+        try{gr.setPointerCapture(e.pointerId);}catch(_){}
+        let hover=null;
+        const mv=ev=>{
+          const el=document.elementFromPoint(ev.clientX,ev.clientY);
+          const t=el&&(el.closest('.amb-wrap')||el.closest('.amb-ghead[data-gh]'));
+          if(hover&&hover!==t)hover.classList.remove('drop-hint');
+          hover=t;if(hover&&hover!==row)hover.classList.add('drop-hint');
+        };
+        const up=ev=>{
+          gr.removeEventListener('pointermove',mv);
+          gr.removeEventListener('pointerup',up);gr.removeEventListener('pointercancel',up);
+          row.classList.remove('dragging');
+          if(hover)hover.classList.remove('drop-hint');
+          if(!hover||hover===row)return;
+          if(hover.dataset&&hover.dataset.gh!==undefined&&!hover.classList.contains('amb-wrap')){
+            ambSetGroup(id,hover.dataset.gh);return;
+          }
+          const tid=hover.dataset.row;
+          const gid=inGroupOf(tid);
+          _ambGroups.item=_ambGroups.item||{};
+          if(gid)_ambGroups.item[id]=gid;else delete _ambGroups.item[id];
+          const list=window._allAmbients||[];
+          const idsAll=list.filter(x=>inGroupOf(x.id)===gid&&x.id!==id).map(x=>x.id);
+          const saved=((_ambGroups.order||{})[gid]||[]).filter(i=>idsAll.includes(i));
+          const ids=saved.concat(idsAll.filter(i=>!saved.includes(i)));
+          ids.splice(Math.max(0,ids.indexOf(tid)),0,id);
+          (_ambGroups.order=_ambGroups.order||{})[gid]=ids;
+          saveAmbGroups();renderAmbList();
+        };
+        gr.addEventListener('pointermove',mv);
+        gr.addEventListener('pointerup',up);gr.addEventListener('pointercancel',up);
+      });
+    });
+  }
+}
+function buildAmbientUI(){
+  Promise.all([
+    fetch('/api/ambient/list').then(r=>r.json()),
+    fetch('/api/reading-prefs').then(r=>r.json()).catch(()=>({}))
+  ]).then(([d,pref])=>{
+    window._allAmbients=(d.sounds||[]).map(x=>({id:'local_'+x.id,name:x.name,nice:prettyAmbName(x.name),localFile:x.file,user:!!x.user}));
+    try{_ambGroups=JSON.parse(pref.ambientGroups||'{}');}catch(e){_ambGroups={};}
+    renderAmbList();
+  });
+}
+async function uploadAmbient(input){
+  const f=input.files&&input.files[0];input.value='';
+  if(!f)return;
+  if(typeof toast==='function')toast('上传中…');
+  try{
+    const fd=new FormData();fd.append('file',f);
+    const r=await (await fetch('/api/ambient/upload',{method:'POST',body:fd})).json();
+    if(r.ok){buildAmbientUI();if(typeof toast==='function')toast('已添加「'+(r.name||'')+'」');}
+    else if(typeof toast==='function')toast('上传失败'+(r.detail?('：'+r.detail):''));
+  }catch(e){if(typeof toast==='function')toast('上传失败');}
+}
+async function delAmbient(id,ev){
+  if(ev)ev.stopPropagation();
+  if(!confirm('删除这个自己上传的声音？'))return;
+  const stem=id.replace(/^local_/,'');
+  if(ambientEls[id]){try{ambientEls[id].audio.pause();}catch(_){}delete ambientEls[id];}
+  try{await fetch('/api/ambient/user/'+encodeURIComponent(stem),{method:'DELETE'});buildAmbientUI();}catch(e){}
 }
 function editReaderTitle(){
   if(!bookId)return;
@@ -1889,69 +2089,168 @@ function toggleAmbient(){
   const p=document.getElementById('ambient-panel');
   const willOpen = !p.classList.contains('show');   // 先看原本是开还是关
   closeAll();                                        // 关掉其它面板（也会清掉本面板的 show）
-  if(willOpen) p.classList.add('show');              // 原本是关的才打开；原本开的→保持关闭（修复"关不了"）
+  if(willOpen){ p.classList.add('show'); renderAmbPresets(); }   // 原本是关的才打开，并刷新"我的组合"
+}
+// 音量渐变：淡入/淡出，避免白噪音"突然炸出来"或被硬切。逐帧改 audio.volume；
+// 就算走了 Web Audio 处理链(createMediaElementSource)，element.volume 依旧生效，所以这条对两种路径都管用。
+// ===== 白噪音引擎 v2：整段解码进 WebAudio =====
+// 为什么重写：手机上 <audio>+playbackRate<1 会一卡一卡、iOS 还锁 volume、循环有接缝；
+// 改成 AudioBuffer→BufferSource 后，快慢是采样级平滑参数、循环无缝、音量/远近/空间全走增益节点，手机电脑一个样。
+let _ambBufCache={};
+function _ambParams(id){   // 读该行四个滑块（重渲染后由 syncAmbUI 回写，始终和真实声音一致）
+  const wrap=document.querySelector(`[data-row="${id}"]`);
+  const gv=(sel,def)=>{const el=wrap&&wrap.querySelector(sel);return el?(parseInt(el.value)||0):def;};
+  return {vol:gv('.amb-vol',50),rate:gv('.amb-rate',100),muffle:gv('.amb-muffle',0),reverb:gv('.amb-reverb',0)};
+}
+function _ambCutoff(v){const t=Math.max(0,Math.min(1,(v||0)/100));return Math.round(20000*Math.pow(350/20000,t));}
+async function _ambBuffer(ctx,conf){
+  if(_ambBufCache[conf.id])return _ambBufCache[conf.id];
+  const ab=await (await fetch('/api/ambient/file/'+encodeURIComponent(conf.name))).arrayBuffer();
+  const buf=await new Promise((res,rej)=>{const pr=ctx.decodeAudioData(ab,res,rej);if(pr&&pr.then)pr.then(res,rej);});
+  const out=_ambSeamless(ctx,buf);   // v4.5：循环接缝先处理掉再缓存
+  _ambBufCache[conf.id]=out;return out;
+}
+function _ambSeamless(ctx,buf){
+  // v4.5 循环"咔哒"根治：素材首尾波形对不上，loop 回卷那一下会蹦个瞬态。
+  // 办法：解码后把结尾约 1 秒与开头做等功率交叉淡化（sin/cos 增益，响度不塌），
+  // 新缓冲长度 = 原长 - 淡化段；开头 F 个采样 = 原开头×sin + 原结尾×cos，
+  // 于是循环点被藏进淡化段里——接缝两侧本来就是同一段混合，听不出回卷。
+  // 只对 >3s 的素材做；太短的（提示音之类）原样返回。
+  try{
+    const sr=buf.sampleRate,L=buf.length;
+    if(L<sr*3)return buf;
+    const F=Math.min(Math.floor(sr),Math.floor(L/3));
+    const out=ctx.createBuffer(buf.numberOfChannels,L-F,sr);
+    for(let ch=0;ch<buf.numberOfChannels;ch++){
+      const s=buf.getChannelData(ch),d=out.getChannelData(ch),tail=L-F;
+      for(let i=0;i<F;i++){
+        const th=(i/F)*Math.PI/2;
+        d[i]=s[i]*Math.sin(th)+s[tail+i]*Math.cos(th);
+      }
+      for(let i=F;i<tail;i++)d[i]=s[i];
+    }
+    return out;
+  }catch(_){return buf;}
+}
+function syncAmbUI(){   // 列表任何一次重渲染（折叠分组/编辑/排序）后，把"正在播"的状态和滑块值写回界面
+  Object.keys(ambientEls).forEach(id=>{
+    const e=ambientEls[id];
+    const btn=document.querySelector(`[data-amb="${id}"]`);if(btn)btn.classList.add('on');
+    const wrap=document.querySelector(`[data-row="${id}"]`);if(!wrap)return;
+    wrap.classList.add('playing');wrap.classList.toggle('open',e.open!==false);
+    const set=(sel,v)=>{const el=wrap.querySelector(sel);if(el)el.value=v;};
+    set('.amb-vol',e.p.vol);set('.amb-rate',e.p.rate);set('.amb-muffle',e.p.muffle);set('.amb-reverb',e.p.reverb);
+    const s=wrap.querySelector('.amb-vol');if(s)s.disabled=false;
+  });
+}
+function ambRowFold(id,ev){   // 播放归播放、展开归展开：随时可以把细调折起来，小均衡条仍然亮着
+  if(ev){ev.stopPropagation();ev.preventDefault();}
+  const wrap=document.querySelector(`[data-row="${id}"]`);if(!wrap)return;
+  wrap.classList.toggle('open');
+  if(ambientEls[id])ambientEls[id].open=wrap.classList.contains('open');
 }
 function toggleAmb(id){
   const btn=document.querySelector(`[data-amb="${id}"]`);
   const wrap=document.querySelector(`[data-row="${id}"]`);
-  const slider=wrap?wrap.querySelector('.amb-vol'):null;
-  const rateSlider=wrap?wrap.querySelector('.amb-rate'):null;
   // 已在播 → 停掉（立刻删引用，避免快速点两下又开一个）
   if(ambientEls[id]){
-    try{ambientEls[id].audio.pause();ambientEls[id].audio.src='';}catch(e){}
+    const e=ambientEls[id];
     delete ambientEls[id];
     if(btn)btn.classList.remove('on');
-    if(wrap)wrap.classList.remove('playing');    // 收起快慢详情
-    if(slider)slider.disabled=true;
+    if(wrap){wrap.classList.remove('playing','open');const s=wrap.querySelector('.amb-vol');if(s)s.disabled=true;}
+    _ambStop(e);
     return;
   }
   const conf=(window._allAmbients||[]).find(a=>a.id===id);
   if(!conf||!conf.localFile)return;
-  const vol=slider?(slider.value/100):0.5;
-  const rate=rateSlider?Math.max(0.5,Math.min(1.5,rateSlider.value/100)):1;
-  const audio=new Audio('/api/ambient/file/'+encodeURIComponent(conf.name));
-  audio.loop=true;audio.volume=vol;
-  try{audio.preservesPitch=false;audio.mozPreservesPitch=false;audio.webkitPreservesPitch=false;audio.playbackRate=rate;}catch(e){}   // 让快慢真正改变声音质感（不锁音高）
-  // Web Audio 处理链：低通(远/闷) + 混响(空间)。干声直达 + 湿声混响并联；失败退回普通播放。
-  let filter=null, wet=null;
-  try{
-    const ctx=_ensureAudioCtx();
-    if(ctx){
-      if(ctx.state==='suspended'){try{ctx.resume();}catch(_){}}
-      const src=ctx.createMediaElementSource(audio);
-      filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=20000;   // 默认不削高频
-      src.connect(filter);
-      filter.connect(ctx.destination);                                                       // 干声直达
-      try{                                                                                    // 湿声：混响支路
-        const conv=ctx.createConvolver();conv.buffer=_reverbIR(ctx);
-        wet=ctx.createGain();wet.gain.value=0;
-        filter.connect(conv);conv.connect(wet);wet.connect(ctx.destination);
-      }catch(_){wet=null;}
-      const mv=wrap?wrap.querySelector('.amb-muffle'):null, rv=wrap?wrap.querySelector('.amb-reverb'):null;
-      if(mv&&parseInt(mv.value)>0){const t=Math.max(0,Math.min(1,mv.value/100));filter.frequency.value=Math.round(20000*Math.pow(350/20000,t));}
-      if(wet&&rv&&parseInt(rv.value)>0){wet.gain.value=Math.min(0.85,rv.value/100*0.85);}
-    }
-  }catch(e){filter=null;wet=null;}
-  // 关键修复：先登记再播，play() 是异步的，先登记才能再点一次就停
-  ambientEls[id]={audio,vol,rate,filter,wet};
+  const p=_ambParams(id);
+  const ctx=_ensureAudioCtx();
+  const e={p,open:true,loading:true};
+  ambientEls[id]=e;
   if(btn)btn.classList.add('on');
-  if(wrap)wrap.classList.add('playing');         // 展开细调（只有播放中的音效才显示）
-  if(slider)slider.disabled=false;
-  audio.play().catch(()=>{
-    // 播放失败（多半是浏览器拦自动播放）→ 撤销登记
-    delete ambientEls[id];if(btn)btn.classList.remove('on');if(wrap)wrap.classList.remove('playing');if(slider)slider.disabled=true;
+  if(wrap){wrap.classList.add('playing','open');const s=wrap.querySelector('.amb-vol');if(s)s.disabled=false;}
+  if(!ctx){_ambLegacyPlay(id,conf,btn,wrap,e);return;}   // 极老浏览器兜底
+  if(ctx.state==='suspended'){try{ctx.resume();}catch(_){}}
+  _ambBuffer(ctx,conf).then(buf=>{
+    if(ambientEls[id]!==e)return;                        // 解码期间被点掉了 → 不再起播
+    e.loading=false;
+    const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;
+    src.playbackRate.value=Math.max(0.5,Math.min(1.5,e.p.rate/100));
+    const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=_ambCutoff(e.p.muffle);
+    const dry=ctx.createGain(),wet=ctx.createGain(),master=ctx.createGain();
+    const t=Math.max(0,Math.min(1,e.p.reverb/100));
+    dry.gain.value=1-0.35*t;wet.gain.value=1.15*t;      // 空间感抬升时干声略退，手机小喇叭也能听出区别
+    master.gain.value=0;                                 // 静音起步 → ~2.4s 缓缓浮上来（v4.5 放缓）
+    src.connect(filter);filter.connect(dry);dry.connect(master);
+    try{const conv=ctx.createConvolver();conv.buffer=_reverbIR(ctx);filter.connect(conv);conv.connect(wet);wet.connect(master);}catch(_){}
+    master.connect(ctx.destination);
+    Object.assign(e,{ctx,src,filter,dry,wet,master});
+    src.start();
+    master.gain.setTargetAtTime(Math.max(0,Math.min(1,e.p.vol/100)),ctx.currentTime,0.8);
+  }).catch(()=>{
+    if(ambientEls[id]!==e)return;                        // 个别编码解不动 → 退回 <audio> 直放（无特效）
+    _ambLegacyPlay(id,conf,btn,wrap,e);
+  });
+}
+function _ambStop(e){
+  try{
+    if(e&&e.master&&e.ctx){
+      e.master.gain.setTargetAtTime(0,e.ctx.currentTime,0.33);   // ~1s 淡出后再真正停（v4.5 放缓）
+      const s=e.src,m=e.master;
+      setTimeout(()=>{try{s.stop();}catch(_){ }try{m.disconnect();}catch(_){ }},1100);
+    }else if(e&&e.audio){
+      const a=e.audio;
+      const step=()=>{try{a.volume=Math.max(0,a.volume-0.09);}catch(_){ }
+        if(a.volume>0.02)setTimeout(step,50);else{try{a.pause();a.src='';}catch(_){ }}};
+      step();
+    }
+  }catch(_){}
+}
+function _ambLegacyPlay(id,conf,btn,wrap,e){
+  const audio=new Audio('/api/ambient/file/'+encodeURIComponent(conf.name));
+  audio.loop=true;audio.volume=0;
+  try{audio.preservesPitch=false;audio.mozPreservesPitch=false;audio.webkitPreservesPitch=false;
+      audio.playbackRate=Math.max(0.5,Math.min(1.5,e.p.rate/100));}catch(_){}
+  e.audio=audio;e.legacy=true;e.loading=false;
+  audio.play().then(()=>{
+    const target=Math.max(0,Math.min(1,e.p.vol/100));
+    const step=()=>{if(ambientEls[id]!==e)return;try{audio.volume=Math.min(target,audio.volume+0.06);}catch(_){return;}
+      if(audio.volume<target-0.01)setTimeout(step,60);};
+    step();
+  }).catch(()=>{
+    delete ambientEls[id];
+    if(btn)btn.classList.remove('on');
+    if(wrap){wrap.classList.remove('playing','open');const s=wrap.querySelector('.amb-vol');if(s)s.disabled=true;}
     if(typeof toast==='function')toast('播放失败，点一下页面再试');
   });
 }
+function setAmbItemVol(id,v){
+  const e=ambientEls[id];if(!e)return;
+  e.p.vol=parseInt(v)||0;
+  const vol=Math.max(0,Math.min(1,v/100));
+  if(e.master&&e.ctx)e.master.gain.setTargetAtTime(vol,e.ctx.currentTime,0.08);
+  else if(e.audio){try{e.audio.volume=vol;}catch(_){}}
+}
+function setAmbItemRate(id,v){
+  const e=ambientEls[id];if(!e)return;
+  e.p.rate=parseInt(v)||100;
+  const rate=Math.max(0.5,Math.min(1.5,(v||100)/100));
+  if(e.src&&e.ctx)e.src.playbackRate.setTargetAtTime(rate,e.ctx.currentTime,0.06);   // 采样级平滑，慢速不再一卡一卡
+  else if(e.audio){try{e.audio.playbackRate=rate;}catch(_){}}
+}
 function setAmbItemMuffle(id,v){
-  const e=ambientEls[id]; if(!e||!e.filter)return;
-  const t=Math.max(0,Math.min(1,(v||0)/100));
-  const cutoff=Math.round(20000*Math.pow(350/20000,t));   // 0→20000Hz(不削)  100→~350Hz(很闷/很远)
-  try{e.filter.frequency.value=cutoff;}catch(_){}
+  const e=ambientEls[id];if(!e)return;
+  e.p.muffle=parseInt(v)||0;
+  if(e.filter&&e.ctx)e.filter.frequency.setTargetAtTime(_ambCutoff(v),e.ctx.currentTime,0.06);
 }
 function setAmbItemReverb(id,v){
-  const e=ambientEls[id]; if(!e||!e.wet)return;
-  try{e.wet.gain.value=Math.min(0.85,Math.max(0,(v||0)/100)*0.85);}catch(_){}   // 0→无混响  100→较强空间感
+  const e=ambientEls[id];if(!e)return;
+  e.p.reverb=parseInt(v)||0;
+  const t=Math.max(0,Math.min(1,(v||0)/100));
+  if(e.ctx){
+    if(e.wet)e.wet.gain.setTargetAtTime(1.15*t,e.ctx.currentTime,0.08);
+    if(e.dry)e.dry.gain.setTargetAtTime(1-0.35*t,e.ctx.currentTime,0.08);
+  }
 }
 let _reverbBuf=null;
 function _reverbIR(ctx){
@@ -1965,23 +2264,65 @@ function _reverbIR(ctx){
   }
   _reverbBuf=buf; return buf;
 }
-function setAmbItemVol(id,v){
-  const vol=Math.max(0,Math.min(1,v/100));
-  if(ambientEls[id]){ambientEls[id].vol=vol;ambientEls[id].audio.volume=vol;}
-}
-function setAmbItemRate(id,v){
-  const rate=Math.max(0.5,Math.min(1.5,(v||100)/100));
-  if(ambientEls[id]){ambientEls[id].rate=rate;try{ambientEls[id].audio.preservesPitch=false;ambientEls[id].audio.mozPreservesPitch=false;ambientEls[id].audio.webkitPreservesPitch=false;ambientEls[id].audio.playbackRate=rate;}catch(e){}}
-}
 function stopAllAmbient(){
   Object.keys(ambientEls).forEach(id=>{
-    try{ambientEls[id].audio.pause();ambientEls[id].audio.src='';}catch(e){}
+    const e=ambientEls[id];delete ambientEls[id];
     const btn=document.querySelector(`[data-amb="${id}"]`);if(btn)btn.classList.remove('on');
-    const wrap=document.querySelector(`[data-row="${id}"]`);if(wrap){wrap.classList.remove('playing');const s=wrap.querySelector('.amb-vol');if(s)s.disabled=true;}
-    delete ambientEls[id];
+    const wrap=document.querySelector(`[data-row="${id}"]`);
+    if(wrap){wrap.classList.remove('playing','open');const s=wrap.querySelector('.amb-vol');if(s)s.disabled=true;}
+    _ambStop(e);
   });
 }
 // 兼容旧的全局音量调用（若别处还引用）
+
+// ===== 白噪音「常用组合」：整套(哪些音+各自音量/快慢/远近/空间)存进 reading_prefs(服务端) =====
+// 好处：能存多套一键切换；且因为存服务端，网页/平板/手机开同一个库时组合是同步的。
+function escAmb(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function getAmbPresets(){try{return PREFS.ambientPresets?JSON.parse(PREFS.ambientPresets):[];}catch(e){return [];}}
+function _saveAmbPresets(list){PREFS.ambientPresets=JSON.stringify(list);savePref('ambientPresets',PREFS.ambientPresets);}
+function renderAmbPresets(){
+  const box=document.getElementById('amb-presets');if(!box)return;
+  const list=getAmbPresets();
+  const chips=list.map((p,i)=>`<span class="amb-pchip" onclick="applyAmbPreset(${i})" title="点一下应用这套组合">${escAmb(p.name)}<button class="apc-del" onclick="event.stopPropagation();delAmbPreset(${i})" title="删除">×</button></span>`).join('');
+  box.innerHTML=`<div class="amb-plabel">我的组合</div><div class="amb-prow">${chips}<button class="amb-psave" onclick="saveCurrentAmbPreset()" title="把当前播放的存成组合">＋</button></div>`;
+}
+function _snapshotAmb(){   // 抓当前在播的每个音 + 它四个滑块的值
+  const out=[];
+  Object.keys(ambientEls).forEach(id=>{
+    const wrap=document.querySelector(`[data-row="${id}"]`);if(!wrap)return;
+    const gv=(sel,def)=>{const el=wrap.querySelector(sel);return el?(parseInt(el.value)||0):def;};
+    out.push({id,vol:gv('.amb-vol',50),rate:gv('.amb-rate',100),muffle:gv('.amb-muffle',0),reverb:gv('.amb-reverb',0)});
+  });
+  return out;
+}
+function saveCurrentAmbPreset(){
+  const sounds=_snapshotAmb();
+  if(!sounds.length){if(typeof toast==='function')toast('先开一两个声音再存');return;}
+  const list=getAmbPresets();
+  const name=prompt('给这套组合起个名字：','组合'+(list.length+1));
+  if(name===null)return;
+  list.push({name:(name.trim()||('组合'+(list.length+1))),sounds});
+  _saveAmbPresets(list);renderAmbPresets();
+  if(typeof toast==='function')toast('已存组合');
+}
+function delAmbPreset(i){
+  const list=getAmbPresets();if(i<0||i>=list.length)return;
+  list.splice(i,1);_saveAmbPresets(list);renderAmbPresets();
+}
+function applyAmbPreset(i){
+  const p=getAmbPresets()[i];if(!p)return;
+  stopAllAmbient();                                  // 先清场（会淡出，delete 同步生效）
+  setTimeout(()=>{                                    // 隔一帧再逐个起，避开淡出尾巴
+    (p.sounds||[]).forEach(s=>{
+      const wrap=document.querySelector(`[data-row="${s.id}"]`);
+      if(!wrap)return;                                // 该音频已不在（换了库/删了文件）→ 跳过
+      const set=(sel,v)=>{const el=wrap.querySelector(sel);if(el)el.value=v;};
+      set('.amb-vol',s.vol);set('.amb-rate',s.rate||100);set('.amb-muffle',s.muffle||0);set('.amb-reverb',s.reverb||0);
+      if(!ambientEls[s.id])toggleAmb(s.id);           // 起播：toggleAmb 会读上面设好的滑块值
+    });
+  },60);
+  if(typeof toast==='function')toast('已切到「'+p.name+'」');
+}
 
 // ============ epub ============
 function ensureEpubLib(){
@@ -2014,6 +2355,18 @@ async function loadEpub(){
     document.getElementById('tap-right').onclick=()=>epubRend.next();
     document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')epubRend.prev();if(e.key==='ArrowRight')epubRend.next();});
   }catch(e){pv.innerHTML='<div class="reader-note">epub 加载失败: '+escapeHtml(e.message||'')+'<br><a class="rn-btn" href="/">返回书房</a></div>';}
+}
+async function loadPdf(){
+  document.getElementById('scroll-view').style.display='none';
+  const pv=document.getElementById('page-view');pv.classList.add('active');pv.style.display='block';
+  // v4.6.2：PDF 用浏览器自带的查看器渲染（iframe 嵌入原始文件）——不经过自定义分页/主题/划线系统，
+  // 排版、翻页手势都是浏览器 PDF 阅读器自己的一套，读得进去，但换肤/划线/自动记进度这些接不上，
+  // 是目前最省事、不用额外依赖、离线也能用的方案。想要更深的功能得接一个专门的 PDF 渲染库，先不做。
+  pv.innerHTML='<iframe id="pdf-frame" title="'+escapeHtml(bookTitle)+'" src="/api/book/'+bookId+'/file" '+
+    'style="width:100%;height:100%;border:none;background:#525659"></iframe>';
+  const pn=document.getElementById('page-num');if(pn)pn.textContent='PDF';
+  const tl=document.getElementById('tap-left'),tr=document.getElementById('tap-right');
+  if(tl)tl.onclick=null;if(tr)tr.onclick=null;
 }
 
 // ============ Quill 形象（和书房选的同步）============
@@ -2055,8 +2408,36 @@ async function loadDesk(){
     else{L.style.backgroundImage='';document.body.classList.remove('has-desk-l');}
     if(s.desk_right){R.style.backgroundImage=`url(${s.desk_right})`;document.body.classList.add('has-desk-r');}
     else{R.style.backgroundImage='';document.body.classList.remove('has-desk-r');}
+    applyDeskAdjust();
   }catch(e){}
 }
+// 书房「图片微调」里对书桌左/右调的 位置/缩放/旋转/模糊，存在 localStorage(home_slot_adj)，这里读出来应用
+function applyDeskAdjust(){
+  let all={};try{const o=JSON.parse(localStorage.getItem('home_slot_adj')||'{}');if(o&&typeof o==='object')all=o;}catch(e){}
+  [['desk_left','desk-left','left center','90deg'],['desk_right','desk-right','right center','270deg']].forEach(([k,id,origin,dir])=>{
+    const el=document.getElementById(id);if(!el)return;
+    const a=Object.assign({x:50,y:50,zoom:100,rot:0,blur:0,feather:0},all[k]||{});
+    el.style.backgroundPosition=a.x+'% '+a.y+'%';
+    const z=Math.max(0.5,(a.zoom||100)/100);
+    el.style.transformOrigin=origin;                       // 以各自贴的边为基准缩放，不往正文里挤
+    el.style.transform=(z!==1||a.rot)?`scale(${z}) rotate(${a.rot}deg)`:'';
+    const f=[];
+    if(a.blur>0)f.push(`blur(${a.blur}px)`);
+    if(a.bright!=null&&a.bright!==100)f.push(`brightness(${a.bright}%)`);
+    if(a.contrast!=null&&a.contrast!==100)f.push(`contrast(${a.contrast}%)`);
+    if(a.sat!=null&&a.sat!==100)f.push(`saturate(${a.sat}%)`);
+    if(a.temp)f.push(a.temp>0?`sepia(${Math.min(60,a.temp)}%)`:`hue-rotate(${a.temp}deg)`);
+    if(a.fade>0)f.push(`grayscale(${a.fade}%)`);
+    el.style.filter=f.join(' ');
+    if(a.feather>0){                                       // 羽化=把"向正文淡出"的起点往回收（0=默认从60%开始淡）
+      const stop=Math.max(8,78-a.feather);
+      const m=`linear-gradient(${dir},#000 ${stop}%,transparent)`;
+      el.style.webkitMaskImage=m;el.style.maskImage=m;
+    }else{el.style.webkitMaskImage='';el.style.maskImage='';}
+  });
+}
+// 书房页那边一边拖一边调时，已打开的阅读页跟着实时变（storage 事件跨标签页广播）
+window.addEventListener('storage',e=>{if(e&&e.key==='home_slot_adj')applyDeskAdjust();});
 
 // ============ 工具 ============
 function escapeHtml(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
@@ -2067,7 +2448,7 @@ function toast(msg){
   clearTimeout(window._tt);window._tt=setTimeout(()=>t.style.opacity='0',1800);
 }
 
-// ====== 拖动：环境音小窗 + Quill 入口都能四处拖 ======
+// ====== 拖动：声音小窗 + Quill 入口都能四处拖 ======
 function makeDraggable(el, handle, onTap){
   if(!el||!handle)return;
   let sx,sy,ox,oy,moved=false,dragging=false;

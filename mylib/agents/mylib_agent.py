@@ -309,7 +309,7 @@ def _call_deepseek(messages: list, tools: list, config: dict,
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             result = json.loads(resp.read().decode('utf-8'))
         return result
     except urllib.error.HTTPError as e:

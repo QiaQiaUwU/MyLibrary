@@ -13,7 +13,7 @@ body[data-tt="night"]{--bg:#373d44;--text:#cdd1d6;--text2:#969ba3;--accent:#94a3
 #theme-bg{position:fixed;inset:0;z-index:-2;background:var(--bg);background-size:cover;background-position:center}
 #theme-veil{position:fixed;inset:0;z-index:-1;background:var(--bg);opacity:0;transition:opacity .4s;pointer-events:none}
 body.has-bg #theme-veil{opacity:0.85}
-body{font-family:"Noto Serif SC",serif;background:var(--bg);color:var(--text);padding:24px;max-width:680px;margin:0 auto;transition:background .4s,color .4s}
+body{user-select:none;font-family:"Noto Serif SC",serif;background:var(--bg);color:var(--text);padding:24px;max-width:680px;margin:0 auto;transition:background .4s,color .4s}
 .setwrap{position:relative;z-index:1}
 h1{font-size:24px;margin-bottom:8px;font-weight:600}
 h1 a{text-decoration:none}
@@ -56,6 +56,7 @@ button:disabled{opacity:0.5;cursor:default}
 .prof-chip .pc-model{font-size:11px;opacity:.8;white-space:nowrap}
 .prof-chip .pc-del{border:none;background:none;color:inherit;opacity:.6;cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
 .prof-chip .pc-del:hover{opacity:1}
+input,textarea,select{user-select:text}
 </style></head><body>
 <div id="theme-bg"></div><div id="theme-veil"></div>
 <div class="setwrap">
@@ -82,18 +83,19 @@ button:disabled{opacity:0.5;cursor:default}
   <!-- 连接配置档（参考 SillyTavern）：保存多套接口，一键切换 -->
   <div class="prof-label">连接配置档<span class="prof-tip">（保存多套接口，点一下切换）</span></div>
   <div class="profiles" id="profiles-bar"><span class="prof-empty">还没有保存的配置档</span></div>
-  <div class="row" style="margin:8px 0 4px"><button class="small ghost" onclick="saveAsProfile()">＋ 把当前填的存成一个配置档</button></div>
+  <div class="row" style="margin:8px 0 4px"><button class="small ghost" onclick="saveAsProfile()">保存为配置档</button></div>
   <hr style="border:none;border-top:1px dashed var(--border);margin:14px 0">
   <input type="hidden" id="ai-provider" value="">
   <label>Base URL（中转站/反代给的接口地址，通常以 /v1 结尾）</label>
   <input type="text" id="ai-url" placeholder="例如 https://你的反代域名/v1" spellcheck="false" oninput="resetTestBtn()">
   <label>API Key</label>
   <input type="password" id="ai-key" placeholder="sk-xxxx（你的密钥）" spellcheck="false" oninput="resetTestBtn()">
-  <label>模型 <span style="color:var(--ink-faint);font-weight:400;font-size:12px">（点开输入框自动拉取可选模型，也可直接手填）</span></label>
-  <input type="text" id="ai-model" list="ai-model-list" placeholder="例如 deepseek-chat / gpt-4o-mini" spellcheck="false" autocomplete="off" oninput="resetTestBtn()" onfocus="if(!document.getElementById('ai-model-list').children.length)fetchModels(true)">
+  <label>模型 <span id="ai-model-ok" style="color:#5a7d4f;display:none">✓ 可用</span></label>
+  <input type="text" id="ai-model" list="ai-model-list" placeholder="例如 deepseek-chat / gpt-4o-mini" spellcheck="false" autocomplete="off" oninput="resetTestBtn()" onfocus="if(!document.getElementById('ai-model-list').children.length)fetchModels()">
   <datalist id="ai-model-list"></datalist>
   <div class="row" style="margin-top:14px">
     <button class="small" id="btn-test" onclick="testAI()">测试</button>
+    <button class="small" style="margin-left:8px" onclick="saveAI(this)">保存</button>
   </div>
   <div class="status" id="ai-status"></div>
 </div>
@@ -161,8 +163,9 @@ async function testAI(){
   try{
     const r=await (await fetch('/api/settings/test-ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base_url,api_key,model})})).json();
     if(r.ok){
-      await fetchModels(true);              // 顺便把可选模型拉进下拉（只读，不动配置）
+      await fetchModels();              // 顺便把可选模型拉进下拉（只读，不动配置）
       btn.textContent='✓ 连接成功';btn.classList.add('ok');
+      window._mlOpen=true;fetchModels();
       setStatus($('ai-status'),'✓ 连接成功。要让 Quill 用上并记住（下次不用重输），点下方「保存配置」','ok');
       const pill=$('ai-pill');if(pill){pill.textContent='待保存';pill.className='pill on';}
     } else {
@@ -173,20 +176,50 @@ async function testAI(){
   btn.disabled=false;
 }
 function resetTestBtn(){const b=$('btn-test');if(b){b.textContent='测试';b.classList.remove('ok','bad');}}
-async function fetchModels(silent){
+async function fetchModels(){
   const base_url=$('ai-url').value.trim();let api_key=$('ai-key').value;
-  if(!base_url){if(!silent)setStatus($('ai-status'),'先填 Base URL','err');return;}
-  if(!silent)setStatus($('ai-status'),'正在获取模型列表…','busy');
+  if(!base_url){setStatus($('ai-status'),'先填 Base URL','err');return;}
+  setStatus($('ai-status'),'正在获取模型列表…','busy');
   try{
     const r=await (await fetch('/api/settings/models',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base_url,api_key})})).json();
     if(r.ok&&r.models&&r.models.length){
       const dl=$('ai-model-list');
-      dl.innerHTML=r.models.map(m=>`<option value="${(''+m).replace(/"/g,'&quot;')}">`).join('');
-      if(!silent)setStatus($('ai-status'),'✓ 拿到 '+r.count+' 个模型，点输入框从下拉里选','ok');
+      if(dl)dl.innerHTML=r.models.map(m=>`<option value="${(''+m).replace(/"/g,'&quot;')}">`).join('');
+      window._allModels=r.models;
+      renderModelPanel(r.models);
+      setStatus($('ai-status'),'✓ 拿到 '+r.count+' 个模型，从下面列表点选','ok');
     }else{
-      if(!silent)setStatus($('ai-status'),'✗ '+(r.error||'没有可选模型，直接手填模型名即可'),'err');
+      // 关键：拉取失败不再静默——把真实状态码/返回片段显示出来，一眼看清是 404、鉴权还是格式问题
+      const st=(r.status!=null&&r.status!==0)?(' [HTTP '+r.status+']'):'';
+      const dt=r.detail?(' — '+String(r.detail).slice(0,120)):'';
+      setStatus($('ai-status'),'✗ '+(r.error||'没有可选模型')+st+dt,'err');
     }
-  }catch(e){if(!silent)setStatus($('ai-status'),'✗ 请求出错：'+e,'err');}
+  }catch(e){setStatus($('ai-status'),'✗ 请求出错：'+e,'err');}
+}
+// 模型清单:默认折叠,测试成功后自动拉取;点条目=填入
+function renderModelPanel(list){
+  let wrap=$('ai-model-wrap');
+  if(!wrap){
+    wrap=document.createElement('div');wrap.id='ai-model-wrap';wrap.style.marginTop='8px';
+    const inp=document.getElementById('ai-model');inp.parentNode.insertBefore(wrap,inp.nextSibling);
+  }
+  const cur=document.getElementById('ai-model').value.trim();
+  const open=window._mlOpen?'':'display:none';
+  wrap.innerHTML=`<a style="font-size:12px;color:#8a7a5c;cursor:pointer;user-select:none" onclick="window._mlOpen=!window._mlOpen;renderModelPanel(window._allModels||[])">${window._mlOpen?'▾':'▸'} 模型列表（${(list||[]).length} 个，点条目填入）</a>
+  <div style="${open};margin-top:6px;max-height:190px;overflow:auto;border:1px solid #d8d2c6;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:6px;background:#faf7f0">
+  ${(list||[]).map(m=>`<button type="button" style="padding:4px 10px;border:1.5px solid ${m===cur?'#8a7a5c':'#d8d2c6'};border-radius:14px;background:#fff;color:#4a443a;font-size:12px;cursor:pointer" onclick="pickModel(this.textContent)">${m}</button>`).join('')||'<span style="font-size:12px;color:#999">还没拉到——点「测试」通了会自动拉</span>'}
+  </div>`;
+}
+function pickModel(m){document.getElementById('ai-model').value=m;renderModelPanel(window._allModels||[]);}
+async function saveAI(btn){
+  if(btn){btn.disabled=true;btn.textContent='保存中…';}
+  const ok=$('ai-model-ok');if(ok)ok.style.display='none';
+  try{
+    await saveSettings();
+    const r=await (await fetch('/api/settings/test-ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base_url:$('ai-url').value.trim(),api_key:$('ai-key').value.trim(),model:$('ai-model').value.trim()})})).json();
+    if(ok&&r.ok)ok.style.display='';
+  }catch(e){}
+  if(btn){btn.disabled=false;btn.textContent='保存';}
 }
 async function saveSettings() {
   await fetch('/api/settings', {
@@ -272,4 +305,33 @@ function timeThemeByHour(){const h=new Date().getHours();if(h>=5&&h<9)return'daw
 })();
 loadSettings();
 loadProfiles();
+// 设置页背景（书房主题面板里"设置页"方块上传的图；微调读同一份 home_slot_adj）
+fetch('/api/theme/list').then(r=>r.json()).then(d=>{
+  const u=(d.slots||{}).settings_bg;if(!u)return;
+  let a={x:50,y:50,zoom:100,rot:0,blur:0,feather:0};
+  try{a=Object.assign(a,(JSON.parse(localStorage.getItem('home_slot_adj')||'{}').settings_bg)||{});}catch(e){}
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;inset:0;z-index:-1;background-size:cover;pointer-events:none';
+  el.style.backgroundImage='url('+u+')';
+  el.style.backgroundPosition=a.x+'% '+a.y+'%';
+  const z=Math.max(1,(a.zoom||100)/100);
+  if(z!==1||a.rot)el.style.transform='scale('+z+') rotate('+(a.rot||0)+'deg)';
+  if(a.blur)el.style.filter='blur('+a.blur+'px)';
+  if(a.feather){const m='radial-gradient(ellipse 118% 118% at 50% 50%, #000 '+Math.max(0,100-a.feather)+'%, transparent 100%)';el.style.webkitMaskImage=m;el.style.maskImage=m;}
+  document.body.prepend(el);
+}).catch(()=>{});
+// 停止服务按钮：要重启/换包时点它，进程自己退出，不用去任务管理器杀
+(function(){
+  const b=document.createElement('button');
+  b.textContent='停止服务（重启 / 换新版本前点这个）';
+  b.style.cssText='display:block;margin:20px auto 0;padding:9px 18px;border:1px solid #c9705d;color:#c9705d;background:transparent;border-radius:10px;cursor:pointer;font-size:13px';
+  b.onclick=function(){
+    if(!confirm('停止 MyLibrary 服务？页面会失联，重新运行启动程序即可再开。'))return;
+    fetch('/api/shutdown',{method:'POST'}).catch(function(){});
+    b.textContent='已停止，可以关掉这个页面了';b.disabled=true;
+  };
+  document.body.appendChild(b);
+})();
+// 页脚版本号（/api/serverinfo 里带回来的 APP_VERSION）
+fetch('/api/serverinfo').then(r=>r.json()).then(d=>{if(d&&d.version){const v=document.createElement('div');v.style.cssText='text-align:center;font-size:11px;color:var(--ink-faint,#9a938a);padding:18px 0 10px;font-family:var(--sans,sans-serif)';v.textContent='MyLibrary v'+d.version;document.body.appendChild(v);}}).catch(()=>{});
 </script></div></body></html>

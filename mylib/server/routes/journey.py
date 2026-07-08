@@ -54,6 +54,25 @@ async def api_journey_overview():
         'days': days,
     }
 
+@app.get('/api/journey/streak')
+async def api_journey_streak():
+    """连续阅读天数（Quill 入口小火苗）。今天还没读就从昨天往回数，读了就把今天也算上。"""
+    from datetime import date, timedelta
+    lib = get_lib()
+    try:
+        rows = lib.conn.execute('SELECT DISTINCT date FROM reading_diary').fetchall()
+        days = {r[0] for r in rows if r[0]}
+    except Exception:
+        days = set()
+    today = date.today()
+    today_read = today.isoformat() in days
+    cur = today if today_read else today - timedelta(days=1)
+    streak = 0
+    while cur.isoformat() in days:
+        streak += 1
+        cur -= timedelta(days=1)
+    return {'streak': streak, 'today': today_read}
+
 @app.get('/api/journey/reviews')
 async def api_journey_reviews():
     """我写过的总评/简评 —— 把库里所有非空 user_notes 汇总（按最近阅读/录入排序）。
@@ -342,6 +361,16 @@ def api_journey_garden():
         # 最新阅读的排最前（和书架一致）：先按 last_open 倒序，没有的退回按完成月份倒序
         trees.sort(key=lambda t: (t.get('lo') or '', t.get('month') or '0000-00'), reverse=True)
         finished_count = sum(1 for t in trees if t['finished'])
+        # 历史树：同一本书往期读完的那几轮（读完→再读时留的档）
+        try:
+            for r in c.execute("SELECT id, book_id, title, author, skin, month, created_at FROM tree_history ORDER BY id"):
+                trees.append({
+                    'id': 'h%d' % r['id'], 'title': (r['title'] or '未命名') , 'author': r['author'] or '',
+                    'progress': 100, 'finished': True, 'skin': r['skin'] or 'spruce',
+                    'month': r['month'] or '', 'lo': (r['created_at'] or '')[:10], 'hist': 1,
+                })
+        except Exception:
+            pass
         return {
             'trees': trees,
             'finished_count': finished_count,
@@ -394,6 +423,17 @@ async def api_trees_batch(request: Request):
             return {'ok': False, 'error': 'bad action'}
         lib.conn.commit()
         return {'ok': True, 'n': len(ids)}
+    except Exception as e:
+        return {'ok': False, 'error': str(e)}
+
+@app.delete('/api/journey/tree-history/{hid}')
+async def api_del_tree_history(hid: int):
+    """删除一棵历史树（往期读完留档的那种）"""
+    lib = get_lib()
+    try:
+        lib.conn.execute("DELETE FROM tree_history WHERE id=?", (hid,))
+        lib.conn.commit()
+        return {'ok': True}
     except Exception as e:
         return {'ok': False, 'error': str(e)}
 
@@ -468,3 +508,64 @@ async def api_journey_card(theme: str = Query('sage')):
     return Response(content=svg, media_type='image/svg+xml')
 
 # ── 书房主题 / 背景自定义 ─────────────────────────────────────────────────────
+
+
+# ===== 阅读历程分享卡片（SVG） =====
+# 修复：前端"生成卡片"一直在调这个接口，但它从来没被实现过 → 预览裂图、下载 404。
+_CARD_SKINS = {
+    #        底色        卡片        主字      辅字      点缀      描边
+    'sage':  ('#e7ece3', '#f3f6f0', '#3f4a3c', '#7d8a78', '#6f8a68', '#d4ddd0'),
+    'mist':  ('#e3eaef', '#f1f5f8', '#3d4a55', '#7b8894', '#6d8598', '#d2dce3'),
+    'cream': ('#f4ecdd', '#faf5ea', '#574a38', '#9a8c74', '#b08d57', '#e6dcc8'),
+    'paper': ('#efeae0', '#f8f5ee', '#46413a', '#8d867b', '#9d8b7a', '#e0d9cc'),
+    'kraft': ('#d9c4a5', '#e6d6bd', '#4d3f2c', '#8a7658', '#7d6644', '#c9b28c'),
+    'dark':  ('#2e3238', '#3a3f46', '#e8e4dc', '#a7a49c', '#c9b98a', '#4a5058'),
+}
+
+@app.get('/api/journey/card')
+async def api_journey_card(theme: str = 'sage'):
+    """把阅读历程画成一张可保存的 SVG 卡片（皮肤跟前端按钮一一对应）"""
+    from fastapi.responses import Response
+    from datetime import date
+    bg, card, ink, soft, accent, line = _CARD_SKINS.get(theme, _CARD_SKINS['sage'])
+    d = await api_journey_overview()   # 复用总览统计，口径保持一致
+    hours = d.get('total_hours', 0) or 0
+    time_num, time_unit = (int(hours) if float(hours).is_integer() else hours, '小时') if hours >= 1 \
+        else (d.get('total_minutes', 0) or 0, '分钟')
+    today = date.today()
+    stats = [
+        (time_num, time_unit, '阅读时长'),
+        (d.get('days', 0), '天', '有书相伴'),
+        (d.get('books_read', 0), '本', '读过的书'),
+        (d.get('marks_total', 0), '处', '标记与笔记'),
+    ]
+    # 顶部小书堆装饰：几本高矮胖瘦不一的小书脊
+    spines, x = [], 262
+    for w, h, c in ((14, 34, accent), (11, 42, soft), (16, 38, accent), (10, 30, soft), (13, 44, accent), (12, 36, soft)):
+        spines.append(f'<rect x="{x}" y="{126 - h}" width="{w}" height="{h}" rx="2.5" fill="{c}" opacity="0.85"/>')
+        x += w + 6
+    cells = []
+    for i, (num, unit, label) in enumerate(stats):
+        cx = 180 + (i % 2) * 300
+        cy = 420 + (i // 2) * 170
+        cells.append(
+            f'<text x="{cx}" y="{cy}" text-anchor="middle" font-size="54" font-weight="700" fill="{accent}" '
+            f'font-family="Georgia,serif">{num}<tspan font-size="20" fill="{soft}" dx="6">{unit}</tspan></text>'
+            f'<text x="{cx}" y="{cy + 36}" text-anchor="middle" font-size="15" fill="{soft}" '
+            f'font-family="-apple-system,PingFang SC,Microsoft YaHei,sans-serif">{label}</text>'
+        )
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="660" height="880" viewBox="0 0 660 880">
+<rect width="660" height="880" fill="{bg}"/>
+<rect x="36" y="36" width="588" height="808" rx="26" fill="{card}" stroke="{line}" stroke-width="1.5"/>
+<rect x="52" y="52" width="556" height="776" rx="18" fill="none" stroke="{line}" stroke-width="1" opacity="0.6"/>
+{''.join(spines)}
+<line x1="240" y1="136" x2="420" y2="136" stroke="{line}" stroke-width="1.5"/>
+<text x="330" y="212" text-anchor="middle" font-size="36" font-weight="600" fill="{ink}" font-family="Georgia,STSong,serif">我的阅读历程</text>
+<text x="330" y="248" text-anchor="middle" font-size="14" fill="{soft}" font-family="-apple-system,PingFang SC,Microsoft YaHei,sans-serif">{today.year} 年 {today.month} 月 {today.day} 日</text>
+<line x1="150" y1="300" x2="510" y2="300" stroke="{line}" stroke-width="1"/>
+{''.join(cells)}
+<line x1="150" y1="736" x2="510" y2="736" stroke="{line}" stroke-width="1"/>
+<text x="330" y="782" text-anchor="middle" font-size="13" fill="{soft}" font-family="-apple-system,PingFang SC,Microsoft YaHei,sans-serif" letter-spacing="2">MyLibrary · 私人书房</text>
+</svg>'''
+    return Response(content=svg, media_type='image/svg+xml',
+                    headers={'Cache-Control': 'no-store'})

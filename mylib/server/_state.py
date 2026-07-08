@@ -26,6 +26,8 @@ except ImportError:
 sys.path.insert(0, str(Path(__file__).parent))
 from mylib_core import Library
 
+APP_VERSION = '4.2.0'   # 版本号（设置页底部显示，/api/serverinfo 返回）
+
 # ============================================================
 # 配置
 # ============================================================
@@ -126,6 +128,14 @@ def init_library(root_str: str):
         return False, LIB_ERROR
     try:
         new_lib = Library(root)
+        try:
+            from migrate_db import migrate
+            migrate(root / 'library.db')   # v4.6.1：这一步之前只有 scripts/launcher.py 会跑，main.py 的真实启动路径完全没调用过——
+                                            # 意味着任何在某个功能加进 migrate_db.py 之前就建好的库，那张新表/新列永远不会补上，
+                                            # 表现为聊天报 "no such table: quill_sessions" 这类错误。挪到这里：无论正常启动还是
+                                            # 设置页里改库路径热切换，只要库被真正打开过一次，迁移就必然跑一次。
+        except Exception as _e:
+            print(f'  ⚠️  数据库迁移出错（不影响本次启动，但可能有功能因为缺表/缺列用不了）：{_e}')
         try:
             from database import open_threadsafe
             open_threadsafe(new_lib)
