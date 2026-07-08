@@ -100,3 +100,4 @@ exe = EXE(
           else None),  # 换图标：把你的 .ico 覆盖到 static/app.ico（或根目录 app.ico）后重打即可
 )
 
+

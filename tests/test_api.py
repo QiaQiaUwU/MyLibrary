@@ -89,3 +89,4 @@ def test_ai_profiles_roundtrip(app_client):
     import _state
     assert _state.CONFIG['ai']['model'] == 'deepseek-chat'
 
+

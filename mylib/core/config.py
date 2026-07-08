@@ -51,3 +51,4 @@ def static_dir() -> Path:
     cand = Path(__file__).parent.parent.parent / 'static'
     return cand if cand.exists() else Path(__file__).parent
 
+

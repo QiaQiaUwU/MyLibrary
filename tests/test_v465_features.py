@@ -51,3 +51,4 @@ def test_truncate_route_requires_both_params(app_client):
     r2 = app_client.post('/api/quill/messages/truncate', json={'from_message_id': 1})
     assert r2.status_code == 400
 
+

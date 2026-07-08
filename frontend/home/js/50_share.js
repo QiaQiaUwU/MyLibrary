@@ -412,3 +412,4 @@ async function loadJourney(tab){
 (function(){try{var hb=function(){fetch("/api/heartbeat").catch(function(){});};hb();setInterval(hb,20000);document.addEventListener("visibilitychange",function(){if(!document.hidden)hb();});}catch(e){}})();
 
 
+

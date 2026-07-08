@@ -57,3 +57,4 @@ def app_client():
     from fastapi.testclient import TestClient
     return TestClient(s.app)
 
+

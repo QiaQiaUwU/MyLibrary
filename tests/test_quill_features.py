@@ -62,3 +62,4 @@ def test_home_js_module_concat(app_client):
     for mark in ('renderShelf', 'quillBlind', 'qhabitLoad', 'showTermCard', 'QTERM_ART'):
         assert mark in js, mark
 
+

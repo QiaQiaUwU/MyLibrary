@@ -1581,3 +1581,4 @@ def task_detect_finished(task: Task, root: Path, resume: bool = True):
     task.set_progress(100,
         f'完结识别完成：本次扫 {done} 本（其中完结 {finished_n}）。全库累计：完结 {cum_fin}，连载/未完 {cum_ong}，未标记 {cum_unk}')
 
+

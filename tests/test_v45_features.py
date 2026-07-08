@@ -78,3 +78,4 @@ def test_scan_import_in_worker_thread(tmp_path):
     assert 'err' not in result, result.get('err')
     assert result.get('n') == 2
 
+

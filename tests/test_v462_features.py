@@ -73,3 +73,4 @@ def test_port_auto_pick_wired_into_startup():
     assert 'port = _picked' in body, '选到的新端口没有被后续启动流程实际使用'
     assert 'uvicorn.run(app, host=host, port=port' in body, 'uvicorn.run 用的不是 _pick_port 选出来的端口'
 
+

@@ -171,3 +171,4 @@ def make_quiz(passage: str, ai_config: dict, n: int = 4) -> dict:
         })
     return {"questions": out}
 
+

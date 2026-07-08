@@ -22,3 +22,4 @@
 
 > 升级 v42：结束 python/pythonw → 启动 → Ctrl+Shift+R 两次。Quill 连接：进设置点一次「测试」即可。
 
+

@@ -28,3 +28,4 @@ def test_pwa(app_client):
     assert app_client.get('/sw.js').status_code == 200
     assert app_client.get('/static/app-icon.svg').status_code == 200
 
+

@@ -131,3 +131,4 @@ def test_author_scan_parallel_correct_and_faster(tmp_path):
     assert norm(clusters_seq) == norm(clusters_par), '并发扫描结果必须和顺序扫描一致'
     assert t_par < t_seq / 3, f'16 线程应比单线程明显快（seq={t_seq:.2f}s par={t_par:.2f}s）'
 
+

@@ -13,3 +13,4 @@
 
 > 升级 v43：结束 python/pythonw → 启动 → Ctrl+Shift+R 两次、阅读器窗口关掉重开。Quill 连接记得在设置点一次「测试」。
 
+
