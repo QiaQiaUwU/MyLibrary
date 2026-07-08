@@ -38,3 +38,4 @@ All 8 are released under the **Pixabay Content License**; **none require attribu
 - ✅ **CC0 / 公有领域 / Pixabay License**：可自由公开重分发（CC0/PD 不强制署名，但建议仍登记；Pixabay 免署名）。
 - ✅ **CC BY**：可重分发，但**必须署名**（作者名、来源链接、许可名都填到上表）。
 - ⚠️ **CC BY-NC、"仅个人使用"、"免费下载但未注明可重分发"、来源不明、从音乐/视频网站抓取**：**不要**放进公开仓库。改为：把它们写进 `.gitignore` 不上传，并在 README 里写明用户可以去哪里自行获取；或换成上面几类可公开的素材。
+

@@ -88,3 +88,4 @@ def test_ai_profiles_roundtrip(app_client):
     assert r2.status_code == 200 and r2.json().get('ok') is True
     import _state
     assert _state.CONFIG['ai']['model'] == 'deepseek-chat'
+

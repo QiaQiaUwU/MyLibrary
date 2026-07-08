@@ -61,3 +61,4 @@ def test_home_js_module_concat(app_client):
     assert '按文件名顺序拼接' in js               # loader 加的 banner
     for mark in ('renderShelf', 'quillBlind', 'qhabitLoad', 'showTermCard', 'QTERM_ART'):
         assert mark in js, mark
+

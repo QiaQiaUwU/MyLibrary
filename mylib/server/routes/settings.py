@@ -387,3 +387,4 @@ def _hb_watchdog():
 
 if _hb_os.environ.get('MYLIB_NO_WATCHDOG') != '1':
     _hb_threading.Thread(target=_hb_watchdog, daemon=True).start()
+

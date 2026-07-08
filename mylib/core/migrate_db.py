@@ -274,3 +274,4 @@ if __name__ == '__main__':
         print(f'❌ 找不到 {db}')
         sys.exit(1)
     migrate(db)
+

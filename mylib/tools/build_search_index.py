@@ -276,3 +276,4 @@ if __name__ == '__main__':
         build_semantic_index(root, limit)
     else:
         print('请指定 --fts 或 --semantic')
+

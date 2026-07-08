@@ -302,3 +302,4 @@ function ttSend(){
   closeTarot();
   quillFill(msg);
 }
+

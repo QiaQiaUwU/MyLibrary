@@ -47,3 +47,4 @@ git config --global https.proxy http://127.0.0.1:你的代理端口
 ```bash
 git config --global http.postBuffer 524288000
 ```
+

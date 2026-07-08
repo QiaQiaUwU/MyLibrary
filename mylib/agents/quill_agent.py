@@ -1506,3 +1506,4 @@ if __name__ == '__main__':
     print('=== system prompt (俏皮) ===')
     print(build_system_prompt('playful', '喜欢在句末加"呀"')[:200])
     os.unlink(str(db))
+

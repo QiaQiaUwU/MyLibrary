@@ -1321,3 +1321,4 @@ async function applyUserTheme(){
     applySlotAdjust('strip');applySlotAdjust('strip_bottom');applySlotAdjust('corner');applySlotAdjust('side_r');applySlotAdjust('journey_bg');applySlotAdjust('journey_banner');
   }catch(e){}
 }
+

@@ -222,3 +222,4 @@ if __name__ == '__main__':
         scan_duplicates(root, apply=True)
     else:
         scan_duplicates(root, apply=False)
+

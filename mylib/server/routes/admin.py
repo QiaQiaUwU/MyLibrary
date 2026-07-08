@@ -384,3 +384,4 @@ async def api_admin_authors(limit: int = 50):
     return {'authors': [{'name': r['author'], 'count': r['n']} for r in rows]}
 
 # ── 拖放上传入库 ─────────────────────────────────────────────────────────────
+
