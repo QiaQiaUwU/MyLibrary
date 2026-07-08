@@ -85,4 +85,3 @@ def test_save_book_palettes_no_longer_silent():
     body = m.group(0)
     assert '.catch(()=>{})' not in body, 'saveBookPalettes 还在静默吞保存失败——这是取色配色"应用不了、刷新也没用"的头号嫌疑'
     assert 'console.warn' in body, '保存失败至少要留个 console.warn，方便排查'
-

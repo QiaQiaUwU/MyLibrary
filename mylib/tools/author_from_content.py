@@ -144,4 +144,3 @@ if __name__ == '__main__':
     for c in cl[:20]:
         print(f"  [{c['handle']}] → {c['suggested']}：" +
               '、'.join(f"{b['author']}《{b['title'][:12]}》" for b in c['books'][:4]))
-

@@ -564,4 +564,3 @@ function maybeShowTermCard(){
   showTermCard(true);
 }
 
-

@@ -324,4 +324,3 @@ if __name__ == '__main__':
         apply_merge(root)
     else:
         print('请指定 --discover（发现别名）或 --apply（执行合并）')
-

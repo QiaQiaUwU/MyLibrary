@@ -294,6 +294,28 @@ async def api_quill_todos():
     finally:
         conn.close()
 
+@app.post('/api/quill/todos/quick')
+async def api_quill_todo_quick(request: Request):
+    """日历「＋待办」的快捷建条：不经过 AI、不花 token，直接落库（对话里说'提醒我…'走的是另一条路 todo_add 工具）。
+    v4.6.23：这条必须注册在 /todos/{tid} 系列路由之前——FastAPI 按注册顺序匹配路由，
+    这条之前排在 {tid} 后面，导致 POST /todos/quick 被 {tid:int} 那条先接住，
+    "quick" 没法解析成 int，请求直接在参数校验那一步就炸了，压根走不到这个函数体，
+    这也是 CI 里 test_todo_quick_add_and_edit 报 KeyError: 'ok' 的真正原因。"""
+    from quill_agent import _todo_conn
+    from datetime import datetime as _dt
+    b = await request.json()
+    text = (b.get('text') or '').strip()[:200]
+    if not text:
+        raise HTTPException(400, 'text required')
+    due = (b.get('due') or '').strip()[:20]
+    conn = _todo_conn(get_lib().root / 'library.db')
+    try:
+        cur = conn.execute('INSERT INTO quill_todos(text,due,created_at) VALUES(?,?,?)', (text, due, _dt.now().isoformat()))
+        conn.commit()
+        return {'ok': True, 'id': cur.lastrowid}
+    finally:
+        conn.close()
+
 @app.post('/api/quill/todos/{tid}/done')
 async def api_quill_todo_done(tid: int):
     from quill_agent import _todo_conn
@@ -331,24 +353,6 @@ async def api_quill_todo_edit(tid: int, request: Request):
             conn.execute('UPDATE quill_todos SET done=? WHERE id=?', (1 if b.get('done') else 0, tid))
         conn.commit()
         return {'ok': True}
-    finally:
-        conn.close()
-
-@app.post('/api/quill/todos/quick')
-async def api_quill_todo_quick(request: Request):
-    """日历「＋待办」的快捷建条：不经过 AI、不花 token，直接落库（对话里说'提醒我…'走的是另一条路 todo_add 工具）"""
-    from quill_agent import _todo_conn
-    from datetime import datetime as _dt
-    b = await request.json()
-    text = (b.get('text') or '').strip()[:200]
-    if not text:
-        raise HTTPException(400, 'text required')
-    due = (b.get('due') or '').strip()[:20]
-    conn = _todo_conn(get_lib().root / 'library.db')
-    try:
-        cur = conn.execute('INSERT INTO quill_todos(text,due,created_at) VALUES(?,?,?)', (text, due, _dt.now().isoformat()))
-        conn.commit()
-        return {'ok': True, 'id': cur.lastrowid}
     finally:
         conn.close()
 
@@ -507,4 +511,3 @@ async def api_quill_season():
     except Exception:
         pass
     return out
-

@@ -418,4 +418,3 @@ console.log('✓ 顶层加载无异常');
     if(blanks!==0)throw new Error('2026-02-01 是周日，月初不该有空白占位格，实际 '+blanks);
   });
 })();
-

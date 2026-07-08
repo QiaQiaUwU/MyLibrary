@@ -44,4 +44,3 @@ jobs:
         run: gh release create "${{ github.ref_name }}" "dist/MyLibrary.exe" --title "${{ github.ref_name }}" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
-

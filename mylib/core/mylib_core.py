@@ -1669,4 +1669,3 @@ def _md_book_line(b: dict) -> str:
     if extras:
         parts.append(f'`[{", ".join(extras)}]`')
     return ' '.join(parts)
-

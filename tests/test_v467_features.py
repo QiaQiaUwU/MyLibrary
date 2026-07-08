@@ -118,6 +118,19 @@ def test_persona_has_concrete_anti_filler_example():
 
 
 
+def test_todo_quick_route_registered_before_tid_routes():
+    """回归钉子：这次真实翻车过——/todos/quick 之前注册在 /todos/{tid} 系列路由之后，
+    FastAPI 按注册顺序匹配路由，POST /todos/quick 会被 {tid:int} 那条先接住，
+    "quick" 解析不成 int，请求在参数校验那一步直接报错，压根走不到 quick 的处理函数。
+    这条测试直接读源码里几个路由装饰器出现的先后顺序，保证以后不会又被挪回错的位置。"""
+    src = (ROOT / 'mylib' / 'server' / 'routes' / 'quill.py').read_text(encoding='utf-8')
+    idx_quick = src.find("@app.post('/api/quill/todos/quick')")
+    idx_tid_edit = src.find("@app.post('/api/quill/todos/{tid}')")
+    assert idx_quick >= 0 and idx_tid_edit >= 0, '两条路由都应该存在'
+    assert idx_quick < idx_tid_edit, \
+        '/todos/quick 必须注册在 /todos/{tid} 之前，不然 "quick" 会被当成 tid 去解析成 int，直接报错'
+
+
 def test_persona_permits_humor_and_natural_talk():
     """"话不多"、"不刻意卖萌"这类框定太紧，会让所有语气预设都偏向拘谨——
     这次把"可以开玩笑、自然聊天"写进了不随口吻预设变化的核心身份里。"""
@@ -139,4 +152,3 @@ def test_confused_scans_quill_reply_not_user_confusion():
     body = m.group(0)
     assert "QM_PUZZLE_KW.test(replyMsg)" in body, '疑惑应该测 replyMsg（Quill 自己的话），不是 userMsg'
     assert "QM_PUZZLE_KW.test(userMsg)" not in body, '不该再测 userMsg 里有没有困惑关键词——那是上一轮的逻辑错误'
-

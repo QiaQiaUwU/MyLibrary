@@ -197,4 +197,3 @@ if __name__ == '__main__':
     svg = export_booklist('我的耽美书单', demo, 'svg')['content']
     print(f'SVG 长度: {len(svg)} 字符，前200:')
     print(svg[:200])
-

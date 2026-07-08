@@ -403,4 +403,3 @@ if __name__ == '__main__':
         print('⚠️ --move-source 已开启：入库后会删除源文件（含微信/QQ原文件）\n')
 
     watch(root, inbox, extra)
-

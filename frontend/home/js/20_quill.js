@@ -801,4 +801,3 @@ function setQuillTimer(minutes,message){
   },minutes*60*1000);
 }
 
-

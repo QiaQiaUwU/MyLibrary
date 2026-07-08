@@ -56,4 +56,3 @@ def live_reader_html():   return _read('reader/index.html')   or READER_HTML
 def live_reader_js():     return _read('reader/reader.js')    or READER_JS
 def live_admin_html():    return _read('admin/index.html')    or ADMIN_HTML
 def live_settings_html(): return _read('settings/index.html') or SETTINGS_HTML
-

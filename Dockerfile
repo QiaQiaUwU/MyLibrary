@@ -15,4 +15,3 @@ VOLUME ["/data"]
 EXPOSE 8765
 
 CMD ["python", "main.py", "/data", "--no-browser", "--host", "0.0.0.0", "--port", "8765"]
-

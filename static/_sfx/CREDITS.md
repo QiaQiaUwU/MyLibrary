@@ -13,4 +13,3 @@
 
 > 备注：更早的版本曾把这段误标为"代码自合成、MIT"——不准确，已更正为上面的 Pixabay 来源。
 > Note: an earlier version incorrectly labeled this sound as code-generated/MIT; corrected above to its actual Pixabay origin.
-

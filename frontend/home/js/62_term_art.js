@@ -362,4 +362,3 @@ const QTERM_ART24=(function(){
 
   return A;
 })();
-

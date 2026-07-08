@@ -77,4 +77,3 @@ def test_scan_import_in_worker_thread(tmp_path):
     t = threading.Thread(target=worker); t.start(); t.join(120)
     assert 'err' not in result, result.get('err')
     assert result.get('n') == 2
-
