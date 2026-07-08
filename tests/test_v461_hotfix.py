@@ -79,3 +79,4 @@ def test_save_pref_no_longer_swallows_errors_silently():
     body = m.group(0)
     assert 'catch(e){}' not in body, 'savePref 又在静默吞错误了——存失败时用户和开发者都看不出来'
     assert 'console.warn' in body, 'savePref 保存失败时应该至少打个 console.warn，方便排查'
+

@@ -95,3 +95,4 @@ function qMood(kind){
 }
 // 页面就绪后把小灯升级成光点（脚本在 body 末尾，此时头部已在；冒烟桩里 querySelector 为 null 时安静跳过）
 try{qmInit();}catch(_){}
+

@@ -2540,3 +2540,4 @@ window.addEventListener('resize',()=>{
 // 心跳：让独立 exe 在浏览器全部关闭后自动退出进程、释放端口（dev 模式无此接口，fetch 失败被忽略，无害）。
 // 切回前台立刻补一次，配合后端 90s 宽限，手机锁屏/切后台不会被误杀。
 (function(){try{var hb=function(){fetch("/api/heartbeat").catch(function(){});};hb();setInterval(hb,20000);document.addEventListener("visibilitychange",function(){if(!document.hidden)hb();});}catch(e){}})();
+

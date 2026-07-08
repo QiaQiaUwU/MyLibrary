@@ -569,3 +569,4 @@ async def api_journey_card(theme: str = 'sage'):
 </svg>'''
     return Response(content=svg, media_type='image/svg+xml',
                     headers={'Cache-Control': 'no-store'})
+
