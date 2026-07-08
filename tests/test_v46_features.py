@@ -10,15 +10,29 @@ def test_calendar_month_aggregation(app_client):
     cfg = json.load(open(os.environ['MYLIB_CONFIG'], encoding='utf-8'))
     db = Path(cfg['library']['root']) / 'library.db'
     conn = sqlite3.connect(str(db))
-    conn.execute("DELETE FROM quill_todos"); conn.execute("DELETE FROM quill_habits"); conn.execute("DELETE FROM quill_habit_log")
-    conn.execute("INSERT INTO quill_todos(text,due,done) VALUES('交报告','2026-07-10 18:00',0)")
-    conn.execute("INSERT INTO quill_todos(text,due,done) VALUES('买菜','2026-07-07 09:00',1)")
-    conn.execute("INSERT INTO quill_todos(text,due,done) VALUES('下月的事','2026-08-01 09:00',0)")
-    conn.execute("INSERT INTO quill_habits(name,remind_time,goal,created_at) VALUES('早起','07:00',21,'2026-07-01T00:00:00')")
-    conn.execute("INSERT INTO quill_habits(name,remind_time,goal,created_at) VALUES('背单词','21:00',21,'2026-07-06T00:00:00')")
-    conn.execute("INSERT INTO quill_habit_log(habit_id,date) VALUES(1,'2026-07-01')")
-    conn.execute("INSERT INTO quill_habit_log(habit_id,date) VALUES(2,'2026-07-06')")
-    conn.commit(); conn.close()
+    try:
+        # quill_todos/quill_habits/quill_habit_log 是"自愈表"——只在 _todo_conn/_habit_conn
+        # 第一次被调用时才会建出来（不是 migrate_db.py 管的），这里直接用原始 SQL 操作它们之前，
+        # 得先确保表真的存在，不能假设它已经在了（之前就是漏了这一步，本地一直没跑过这个真实场景）。
+        conn.execute('''CREATE TABLE IF NOT EXISTS quill_todos(
+            id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, due TEXT, done INTEGER DEFAULT 0, created_at TEXT)''')
+        conn.execute('''CREATE TABLE IF NOT EXISTS quill_habits(
+            id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, remind_time TEXT DEFAULT '',
+            goal INTEGER DEFAULT 21, medal_at TEXT DEFAULT '', created_at TEXT)''')
+        conn.execute('''CREATE TABLE IF NOT EXISTS quill_habit_log(
+            id INTEGER PRIMARY KEY AUTOINCREMENT, habit_id INTEGER, date TEXT,
+            UNIQUE(habit_id, date))''')
+        conn.execute("DELETE FROM quill_todos"); conn.execute("DELETE FROM quill_habits"); conn.execute("DELETE FROM quill_habit_log")
+        conn.execute("INSERT INTO quill_todos(text,due,done) VALUES('交报告','2026-07-10 18:00',0)")
+        conn.execute("INSERT INTO quill_todos(text,due,done) VALUES('买菜','2026-07-07 09:00',1)")
+        conn.execute("INSERT INTO quill_todos(text,due,done) VALUES('下月的事','2026-08-01 09:00',0)")
+        conn.execute("INSERT INTO quill_habits(name,remind_time,goal,created_at) VALUES('早起','07:00',21,'2026-07-01T00:00:00')")
+        conn.execute("INSERT INTO quill_habits(name,remind_time,goal,created_at) VALUES('背单词','21:00',21,'2026-07-06T00:00:00')")
+        conn.execute("INSERT INTO quill_habit_log(habit_id,date) VALUES(1,'2026-07-01')")
+        conn.execute("INSERT INTO quill_habit_log(habit_id,date) VALUES(2,'2026-07-06')")
+        conn.commit()
+    finally:
+        conn.close()   # 就算上面哪一步炸了，也不留一个没关的连接去干扰同一个数据库文件上的其他测试
 
     r = app_client.get('/api/quill/calendar?month=2026-07').json()
     days = r['days']
